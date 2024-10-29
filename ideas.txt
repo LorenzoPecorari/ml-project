@@ -1,0 +1,7 @@
+https://gymnasium.farama.org/environments/toy_text/taxi/
+https://gymnasium.farama.org/environments/toy_text/frozen_lake/
+https://gymnasium.farama.org/environments/box2d/car_racing/
+
+https://ale.farama.org/environments/battle_zone/
+https://ale.farama.org/environments/bowling/
+https://ale.farama.org/environments/breakout/
