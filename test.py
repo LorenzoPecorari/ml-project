@@ -9,14 +9,14 @@ import numpy as np
 
 class TaxiAgent:
     def __init__(self, learn, e_0, e_decay, e_f, discount):
-        
+
         self.env = gym.make("Taxi-v3", render_mode = "human")
 
         # rates for q-learning
         self.learning_rate = learn
         self.discount_rate = discount
 
-        # values for epsilon approach
+        # values for epsilon-greedy
         self.init_eps = e_0
         self.final_eps = e_f
         self.eps_decay = e_decay
@@ -24,14 +24,22 @@ class TaxiAgent:
 
         # sets to zero all alues into q-learning table on the basis of the number of possible states reachable by the agent
         self.q_vals = np.zeros(self.env.action_space.n)
+        
+    def first_action(self, observation, reward, terminated, truncated, info):
+        observation, reward, terminated, truncated, info = self.env.step(self.env.action_space.sample())
+        print(f"observation: {observation},\n reward: {reward},\n terminated: {terminated},\n truncated: {terminated},\n info : {info}\n")
 
     # it picks ana action by using the epsilon approach
     def get_action(self, observation, reward, terminated, info):
-        if(np.random.random() < self.epsilon):
-            return self.env.action_space.sample()
+        random_num = np.random.random()
+        print(f"{random_num} vs {self.epsilon} = {random_num < self.epsilon}")
         
+        if random_num < self.epsilon:
+            self.epsilon -= self.eps_decay
+            return self.env.action_space.sample()
         else:
-            return self.q_vals.index(max(self.q_vals))
+            return np.argmax(self.q_vals)
+
             
     # it updates the q-learning table after the execution of the action
     def update_agent(self, observation, reward, terminated, info):
@@ -43,14 +51,25 @@ class TaxiAgent:
         observation, info = self.env.reset(seed=10)
         self.init_eps = 1
 
-        # cycles of 
+        observation = None 
+        reward = None
+        terminated = None
+        truncated = None
+        info = None
+        action = None
+        
+        # first action
+        self.first_action(observation, reward, terminated, truncated, info)
+
+        # executional cycle
         for _ in range(1024):
             # I need to use an algorithm for picking the right action to execute!
-            # action = self.get_action(observation) # <- to be commented until methods not completely implemented 
+            action = self.get_action(observation, reward, terminated, info) 
 
-            observation, reward, terminated, truncated, info = self.env.step(self.env.action_space.sample())
+            observation, reward, terminated, truncated, info = self.env.step(action)
             print(f"observation: {observation},\n reward: {reward},\n terminated: {terminated},\n info : {info}")
            
+            # I need to use the observation for updating the table and taking the next action
             # observation obtained as:
             #   ((taxi_row * 5 + taxi_col) * 5 + passenger_location) * 4 + destination
                 
@@ -60,5 +79,6 @@ class TaxiAgent:
         self.env.close()
 
 # "main" calls
-taxi = TaxiAgent(0, 0, 0, 0, 0)
+# REMEMBER : TaxiAgent (learn rate, initial epsilon, epsilon-decade rate, final epsilon, discount rate)
+taxi = TaxiAgent(0, 1, 0.005, 0, 0)
 taxi.start()
