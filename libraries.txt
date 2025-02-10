@@ -1,0 +1,7 @@
+MACHINE LEARNING:
+    - torch => agent, neural network, other stuff
+
+STATISTICS/NUMERICAL ANALYSIS:
+    - numpy
+    - matplotlib
+    - rand
