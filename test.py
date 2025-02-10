@@ -10,7 +10,8 @@ import numpy as np
 class TaxiAgent:
     def __init__(self, learn, e_0, e_decay, e_f, discount):
 
-        self.env = gym.make("Taxi-v3", render_mode = "human")
+        self.env = gym.make("Taxi-v3")
+        # self.env = gym.make("Taxi-v3", render_mode = "human")
 
         # rates for q-learning
         self.learning_rate = learn
