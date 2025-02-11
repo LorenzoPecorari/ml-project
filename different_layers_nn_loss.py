@@ -10,10 +10,14 @@ import torch.nn.functional as F
 import numpy as np
 import matplotlib.pyplot as plt
 
+import os
+
 # NN with 3 layers
 class L3_QNet(nn.Module):
+
     def __init__(self, state_dim, action_dim):
         super(L3_QNet, self).__init__()
+        self.layers = 3
         self.input_layer = nn.Linear(state_dim, 64)
         self.hidden_layer = nn.Linear(64, 64)
         self.output_layer = nn.Linear(64, action_dim)
@@ -23,10 +27,13 @@ class L3_QNet(nn.Module):
         out2 = torch.relu(self.hidden_layer(out1))
         return self.output_layer(out2)
 
+
 # NN with 4 layers
 class L4_QNet(nn.Module):
+
     def __init__(self, state_dim, action_dim):
         super(L4_QNet, self).__init__()
+        self.layers = 4
         self.input_layer = nn.Linear(state_dim, 64)
         self.hidden_layer_1 = nn.Linear(64, 64)
         self.hidden_layer_2 = nn.Linear(64, 64)
@@ -37,11 +44,13 @@ class L4_QNet(nn.Module):
         out2 = torch.relu(self.hidden_layer_1(out1))
         out3 = torch.relu(self.hidden_layer_2(out2))
         return self.output_layer(out3)
-
+    
 # NN with 5 layers
 class L5_QNet(nn.Module):
+    
     def __init__(self, state_dim, action_dim):
         super(L5_QNet, self).__init__()
+        self.layers = 5
         self.input_layer = nn.Linear(state_dim, 64)
         self.hidden_layer_1 = nn.Linear(64, 64)
         self.hidden_layer_2 = nn.Linear(64, 64)
@@ -162,6 +171,20 @@ class Agent:
             self.epsilon *= self.epsilon_decay
         
         return loss.item()
+    
+    def save_train(self):
+        torch.save(self.target_network.state_dict(), f'./trains/{self.layers}L.pth')
+    
+    def load_train(self, filename):
+        filepath = str("./trains/" + filename)
+        print("Searching for " + filepath + " ...")
+        
+        print(os.path.isfile(filepath))
+        
+        if(os.path.isfile(filepath)):
+                self.q_network.load_state_dict(torch.load(filepath, weights_only=True))
+                self.target_network.load_state_dict(torch.load(filepath, weights_only=True))
+                
 
     # old rewards plotting function
     def plot_rewards(self, rewards, layers):
@@ -200,7 +223,6 @@ class Agent:
         plt.ylabel("Reward")
         plt.suptitle(f"Rewards Curve for NN with {self.layers} layers\n")
         plt.title(f"γ = {'%.3f'%(self.gamma)}, ε = {'%.3f'%(self.epsilon)}, ε_dec = {'%.3f'%(self.epsilon_decay)}, ε_min = {'%.3f'%(self.epsilon_min)}, lr = {'%.3f'%(self.lr)}")
-        plt.legend()
 
         plt.savefig(f"{layers}L_rewards.jpg")
         plt.clf()
@@ -218,7 +240,6 @@ class Agent:
         plt.ylabel("Loss")
         plt.suptitle(f"Loss Curve for NN with {self.layers} layers\n")
         plt.title(f"γ = {'%.3f'%(self.gamma)}, ε = {'%.3f'%(self.epsilon)}, ε_dec = {'%.3f'%(self.epsilon_decay)}, ε_min = {'%.3f'%(self.epsilon_min)}, lr = {'%.3f'%(self.lr)}")
-        plt.legend()
 
         plt.savefig(f"{layers}L_loss.jpg")
         plt.clf()
@@ -230,7 +251,7 @@ class Agent:
         accuracy = []
         
         for i in range(1, size + 1):
-            tmp = successes[i-1]
+            tmp += successes[i-1]
             accuracy.append(tmp/i)
             
         plt.plot(successes)
@@ -244,7 +265,7 @@ class Agent:
         plt.clf()
 
 # training function
-def train(episodes, gamma, epsilon, epsilon_decay, lr):
+def train(episodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
     env = gym.make("Taxi-v3")
     
     L3_agent = Agent(layers = 3,
@@ -275,11 +296,13 @@ def train(episodes, gamma, epsilon, epsilon_decay, lr):
                      lr = lr)
 
     agents = [L3_agent, L4_agent, L5_agent]
-    
+        
     for a in agents:
         rewards = []
         losses_per_episode = [] 
         successes = []
+
+        a.load_train(str(a.layers) + "L.pth")
 
         for e in range(episodes):
             state, _ = env.reset() # for obtaining (observation, info) tuple
@@ -291,7 +314,6 @@ def train(episodes, gamma, epsilon, epsilon_decay, lr):
                 action = a.select_action(state)
                 next_state, reward, terminated, truncated, info = env.step(action)
 
-                print("terminated: ", terminated)
                 if(terminated):
                     successes.append(1)
                 else:
@@ -325,15 +347,26 @@ def train(episodes, gamma, epsilon, epsilon_decay, lr):
         a.plot_rewards_smoothed(rewards, a.layers)
         a.plot_losses(losses_per_episode, a.layers)
         a.plot_accuracy(successes)
+        
+        a.save_train()
+        
         successes = []
 
 if __name__ == "__main__":
+
+    env = gym.make("Taxi-v3")    
+    state_dim=env.observation_space.n,
+    action_dim=env.action_space.n,
+    
     gamma = 0.99
     epsilon = 1.0
     epsilon_decay = 0.995 
     epsilon_min = 0.1
     lr = 0.001
-    
-    episodes = 10
-    
-    train(episodes, gamma, epsilon, epsilon_decay, lr)
+
+    episodes = 4000
+    train(episodes, gamma, epsilon, epsilon_decay, epsilon_min, lr)
+
+    # print(os.path.isfile("./trains/3L.pth"))
+    # L3_agent = Agent(3, state_dim[0], action_dim[0], gamma, epsilon, epsilon_decay, epsilon_min, lr)
+    # L3_agent.load_train("3L.pth")
