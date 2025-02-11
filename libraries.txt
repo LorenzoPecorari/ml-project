@@ -1,7 +1,10 @@
 MACHINE LEARNING:
-    - torch => agent, neural network, other stuff
+    - torch => agent, neural network, cuda (gpu), ...
 
 STATISTICS/NUMERICAL ANALYSIS:
     - numpy
     - matplotlib
     - rand
+
+ENVIRONMENT:
+    - gym => gymnasium library
