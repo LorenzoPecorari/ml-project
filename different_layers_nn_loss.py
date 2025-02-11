@@ -222,6 +222,26 @@ class Agent:
 
         plt.savefig(f"{layers}L_loss.jpg")
         plt.clf()
+        
+    # plotting accuracy
+    def plot_accuracy(self, successes):
+        size = len(successes)
+        tmp = 0
+        accuracy = []
+        
+        for i in range(1, size + 1):
+            tmp = successes[i-1]
+            accuracy.append(tmp/i)
+            
+        plt.plot(successes)
+        plt.xlabel("Episode")
+        plt.ylabel("Accuracy")
+        plt.suptitle(f"Accuracy Curve for NN with {self.layers} layers\n")
+        plt.title(f"γ = {'%.3f'%(self.gamma)}, ε = {'%.3f'%(self.epsilon)}, ε_dec = {'%.3f'%(self.epsilon_decay)}, ε_min = {'%.3f'%(self.epsilon_min)}, lr = {'%.3f'%(self.lr)}")
+        plt.legend()
+        
+        plt.savefig(f"{self.layers}L_accuracy.jpg")
+        plt.clf()
 
 # training function
 def train(episodes, gamma, epsilon, epsilon_decay, lr):
@@ -259,6 +279,8 @@ def train(episodes, gamma, epsilon, epsilon_decay, lr):
     for a in agents:
         rewards = []
         losses_per_episode = [] 
+        successes = []
+
         for e in range(episodes):
             state, _ = env.reset() # for obtaining (observation, info) tuple
             done = False
@@ -268,6 +290,13 @@ def train(episodes, gamma, epsilon, epsilon_decay, lr):
             while not done:
                 action = a.select_action(state)
                 next_state, reward, terminated, truncated, info = env.step(action)
+
+                print("terminated: ", terminated)
+                if(terminated):
+                    successes.append(1)
+                else:
+                    successes.append(0)
+                
                 done = terminated or truncated
 
                 # store states, update state and total reward
@@ -295,6 +324,8 @@ def train(episodes, gamma, epsilon, epsilon_decay, lr):
         # rewards and losses plotting
         a.plot_rewards_smoothed(rewards, a.layers)
         a.plot_losses(losses_per_episode, a.layers)
+        a.plot_accuracy(successes)
+        successes = []
 
 if __name__ == "__main__":
     gamma = 0.99
@@ -303,6 +334,6 @@ if __name__ == "__main__":
     epsilon_min = 0.1
     lr = 0.001
     
-    episodes = 2000
+    episodes = 10
     
     train(episodes, gamma, epsilon, epsilon_decay, lr)
