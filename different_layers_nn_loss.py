@@ -249,17 +249,21 @@ class Agent:
         size = len(successes)
         tmp = 0
         accuracy = []
+        window = 10
         
         for i in range(1, size + 1):
             tmp += successes[i-1]
+            print(f"Accuracy: {tmp/i}")
             accuracy.append(tmp/i)
             
-        plt.plot(successes)
+        smoothed_accuracy = np.convolve(accuracy, np.ones(window)/window, mode='valid')
+        
+        plt.plot(accuracy, alpha=0.3, label="Raw Accuracy")
+        plt.plot(range(window - 1, len(accuracy)), smoothed_accuracy, label=f"Smoothed Loss (window={window})", color='blue')
         plt.xlabel("Episode")
         plt.ylabel("Accuracy")
         plt.suptitle(f"Accuracy Curve for NN with {self.layers} layers\n")
         plt.title(f"γ = {'%.3f'%(self.gamma)}, ε = {'%.3f'%(self.epsilon)}, ε_dec = {'%.3f'%(self.epsilon_decay)}, ε_min = {'%.3f'%(self.epsilon_min)}, lr = {'%.3f'%(self.lr)}")
-        plt.legend()
         
         plt.savefig(f"{self.layers}L_accuracy.jpg")
         plt.clf()
@@ -350,6 +354,7 @@ def train(episodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
         
         a.save_train()
         
+        successes = None
         successes = []
 
 if __name__ == "__main__":
@@ -364,7 +369,7 @@ if __name__ == "__main__":
     epsilon_min = 0.1
     lr = 0.001
 
-    episodes = 4000
+    episodes = 2000
     train(episodes, gamma, epsilon, epsilon_decay, epsilon_min, lr)
 
     # print(os.path.isfile("./trains/3L.pth"))
