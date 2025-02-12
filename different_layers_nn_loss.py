@@ -365,11 +365,11 @@ if __name__ == "__main__":
     
     gamma = 0.99
     epsilon = 1.0
-    epsilon_decay = 0.995 
+    epsilon_decay = 0.995
     epsilon_min = 0.1
     lr = 0.001
 
-    episodes = 2000
+    episodes = 1000
     train(episodes, gamma, epsilon, epsilon_decay, epsilon_min, lr)
 
     # print(os.path.isfile("./trains/3L.pth"))
