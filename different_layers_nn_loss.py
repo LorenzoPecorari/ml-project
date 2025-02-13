@@ -222,7 +222,7 @@ class Agent:
         plt.xlabel("Episode")
         plt.ylabel("Reward")
         plt.suptitle(f"Rewards Curve for NN with {self.layers} layers\n")
-        plt.title(f"γ = {'%.3f'%(self.gamma)}, ε = {'%.3f'%(self.epsilon)}, ε_dec = {'%.3f'%(self.epsilon_decay)}, ε_min = {'%.3f'%(self.epsilon_min)}, lr = {'%.3f'%(self.lr)}")
+        plt.title(f"γ = {'%.4f'%(self.gamma)}, ε = {'%.4f'%(self.epsilon)}, ε_dec = {'%.4f'%(self.epsilon_decay)}, ε_min = {'%.4f'%(self.epsilon_min)}, lr = {'%.4f'%(self.lr)}")
 
         plt.savefig(f"{layers}L_rewards.jpg")
         plt.clf()
@@ -239,7 +239,7 @@ class Agent:
         plt.xlabel("Episode")
         plt.ylabel("Loss")
         plt.suptitle(f"Loss Curve for NN with {self.layers} layers\n")
-        plt.title(f"γ = {'%.3f'%(self.gamma)}, ε = {'%.3f'%(self.epsilon)}, ε_dec = {'%.3f'%(self.epsilon_decay)}, ε_min = {'%.3f'%(self.epsilon_min)}, lr = {'%.3f'%(self.lr)}")
+        plt.title(f"γ = {'%.4f'%(self.gamma)}, ε = {'%.4f'%(self.epsilon)}, ε_dec = {'%.4f'%(self.epsilon_decay)}, ε_min = {'%.4f'%(self.epsilon_min)}, lr = {'%.4f'%(self.lr)}")
 
         plt.savefig(f"{layers}L_loss.jpg")
         plt.clf()
@@ -263,7 +263,7 @@ class Agent:
         plt.xlabel("Episode")
         plt.ylabel("Accuracy")
         plt.suptitle(f"Accuracy Curve for NN with {self.layers} layers\n")
-        plt.title(f"γ = {'%.3f'%(self.gamma)}, ε = {'%.3f'%(self.epsilon)}, ε_dec = {'%.3f'%(self.epsilon_decay)}, ε_min = {'%.3f'%(self.epsilon_min)}, lr = {'%.3f'%(self.lr)}")
+        plt.title(f"γ = {'%.4f'%(self.gamma)}, ε = {'%.4f'%(self.epsilon)}, ε_dec = {'%.4f'%(self.epsilon_decay)}, ε_min = {'%.4f'%(self.epsilon_min)}, lr = {'%.4f'%(self.lr)}")
         
         plt.savefig(f"{self.layers}L_accuracy.jpg")
         plt.clf()
@@ -313,16 +313,15 @@ def train(episodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
             done = False
             total_reward = 0
             episode_losses = []  # loss per episodes stored here
+            success = 0
             
             while not done:
                 action = a.select_action(state)
                 next_state, reward, terminated, truncated, info = env.step(action)
 
                 if(terminated):
-                    successes.append(1)
-                else:
-                    successes.append(0)
-                
+                    success = 1
+
                 done = terminated or truncated
 
                 # store states, update state and total reward
@@ -343,9 +342,10 @@ def train(episodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
                 losses_per_episode.append(avg_loss)
             else:
                 losses_per_episode.append(0)
-            
+
+            successes.append(success)            
             rewards.append(total_reward)
-            print(f"Agent {a.layers}L - Episode {e}, Total Reward: {total_reward}, ε: {a.epsilon:.3f}, Avg Loss: {losses_per_episode[-1]:.6f}")
+            print(f"Agent {a.layers}L - Episode {e}, Total Reward: {total_reward}, ε: {a.epsilon:.4f}, Avg Loss: {losses_per_episode[-1]:.6f}")
         
         # rewards and losses plotting
         a.plot_rewards_smoothed(rewards, a.layers)
@@ -363,13 +363,21 @@ if __name__ == "__main__":
     state_dim=env.observation_space.n,
     action_dim=env.action_space.n,
     
+    # standard hyperparameters
     gamma = 0.99
     epsilon = 1.0
     epsilon_decay = 0.995
     epsilon_min = 0.1
     lr = 0.001
 
-    episodes = 1000
+    # new hyperparameters
+    # gamma = 0.99
+    # epsilon = 1.0
+    # epsilon_decay = 0.998
+    # epsilon_min = 0.1
+    # lr = 0.0005
+
+    episodes = 8000
     train(episodes, gamma, epsilon, epsilon_decay, epsilon_min, lr)
 
     # print(os.path.isfile("./trains/3L.pth"))
