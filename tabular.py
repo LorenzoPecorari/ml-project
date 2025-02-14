@@ -33,6 +33,7 @@ class Agent:
         self.epsilon_min = epsilon_min
         self.epsilon_decay = epsilon_decay
         
+        self.rewards = []
         self.losses = []
         self.successes = []
 
@@ -56,11 +57,12 @@ class Agent:
             temp_reward = 0
             temp_loss = 0
             steps = 0
+            success = 0
 
             while(not done):
                 action = self.choose_action(state)
 
-                next_state, reward, done, _, _ = self.env.step(action)
+                next_state, reward, done, truncated, _ = self.env.step(action)
                 
                 if(not(isinstance(state, int))):
                     state = state[0]
@@ -73,15 +75,61 @@ class Agent:
                 state = next_state
                 steps += 1
 
+            if not truncated:
+                success = 1
+
+            self.rewards.append(temp_reward)
             self.losses.append(float(temp_loss / steps))
-            self.successes.append(temp_reward)
+            self.successes.append(success)
 
             if(self.epsilon > self.epsilon_min):
                 self.epsilon *= self.epsilon_decay
             
             print(f"QLT - Episode: {e}, \tReward: {temp_reward}, \t\tε: {self.epsilon}")
 
+    def plot_rewards(self):
+        window = 10
+        plt.figure(figsize = (10, 5))
+        plt.plot(self.rewards, alpha = 0.3, color = 'green', label = "Raw Reward")
+        plt.plot(np.convolve(self.rewards, np.ones(window), 'valid') / window, color = 'green', label = "Smoothed Reward")
+        plt.xlabel("Episode")
+        plt.ylabel("Reward")
+        plt.title("Reward Curve for Tabular Q-Learning")
+        plt.savefig("qlt_rewards.png")
+
+    def plot_loss(self):
+        window = 10
+        plt.figure(figsize = (10, 5))
+        plt.plot(self.losses, alpha = 0.3, color = 'blue', label = "Raw Losses")
+        plt.plot(np.convolve(self.losses, np.ones(window), 'valid') / window, label = "Smoothed Accuracy")
+        plt.xlabel("Episode")
+        plt.ylabel("Loss")
+        plt.title("Loss Curve for Tabular Q-Learning")
+        plt.savefig("qlt_loss.png")
+
+    def plot_accuracy(self):
+        window = 10
+        accuracy = []
+        tmp = 0
+
+        for idx in range(0, len(self.successes)):
+            tmp += self.successes[idx]
+            accuracy.append(float(tmp / (idx + 1)))
+
+        plt.figure(figsize = (10, 5))
+        plt.plot(accuracy, alpha = 0.3, color = 'red', label = "Raw Accuracy")
+        plt.plot(np.convolve(accuracy, np.ones(window), 'valid') / window, color = 'red', label = "Smoothed Accuracy")
+        plt.xlabel("Episode")
+        plt.ylabel("Accuracy")
+        plt.title("Accuracy Curve for Tabular Q-Learning")
+        plt.savefig("qlt_accuracy.png")
+
+    
+
 env = gym.make('Taxi-v3')
 agent = Agent(env, 0.1, 0.99, 1.0, 0.1, 0.995)
-episodes = 10000
+episodes = 1000
 agent.train(episodes)
+agent.plot_rewards()
+agent.plot_loss()
+agent.plot_accuracy()
