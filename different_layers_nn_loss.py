@@ -368,7 +368,7 @@ if __name__ == "__main__":
     epsilon = 1.0
     epsilon_decay = 0.995
     epsilon_min = 0.1
-    lr = 0.001
+    lr = 0.0005
 
     # new hyperparameters
     # gamma = 0.99
