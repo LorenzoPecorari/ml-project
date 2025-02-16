@@ -22,6 +22,9 @@ class QTable:
     def get_item(self, state, action):
         return self.table[state][action]
     
+    def get_alpha(self):
+        return self.alpha
+    
 class Agent:
     def __init__(self, env, alpha, gamma, epsilon, epsilon_min, epsilon_decay):
         self.env = env
@@ -55,7 +58,7 @@ class Agent:
             done = False
 
             temp_reward = 0
-            temp_loss = 0
+            loss = 0
             steps = 0
             success = 0
 
@@ -71,7 +74,7 @@ class Agent:
                     next_state = next_state[0]
                 
                 temp_reward += reward
-                temp_loss += self.update_table(state, action, reward, next_state)
+                loss = self.update_table(state, action, reward, next_state)
                 state = next_state
                 steps += 1
 
@@ -79,7 +82,7 @@ class Agent:
                 success = 1
 
             self.rewards.append(temp_reward)
-            self.losses.append(float(temp_loss / steps))
+            self.losses.append(np.mean(loss))            
             self.successes.append(success)
 
             if(self.epsilon > self.epsilon_min):
@@ -91,21 +94,30 @@ class Agent:
         window = 10
         plt.figure(figsize = (10, 5))
         plt.plot(self.rewards, alpha = 0.3, color = 'green', label = "Raw Reward")
-        plt.plot(np.convolve(self.rewards, np.ones(window), 'valid') / window, color = 'green', label = "Smoothed Reward")
+        plt.plot(range(window - 1, len(self.rewards)), np.convolve(self.rewards, np.ones(window) / window, mode = 'valid'), label = "Smoothed Rewards", color = 'green')
+        
         plt.xlabel("Episode")
         plt.ylabel("Reward")
-        plt.title("Reward Curve for Tabular Q-Learning")
+        plt.suptitle("Reward Curve for Tabular Q-Learning")
+        plt.title(f"α = {'%.4f'%self.q_table.get_alpha()}, γ = {'%.4f'%(self.gamma)}, ε = {'%.4f'%self.epsilon}, ε_min = {'%.4f'%self.epsilon_min}, ε_decay = {'%.4f'%self.epsilon_decay}")
+        
         plt.savefig("qlt_rewards.png")
+        plt.clf()
 
     def plot_loss(self):
         window = 10
         plt.figure(figsize = (10, 5))
-        plt.plot(self.losses, alpha = 0.3, color = 'blue', label = "Raw Losses")
-        plt.plot(np.convolve(self.losses, np.ones(window), 'valid') / window, label = "Smoothed Accuracy")
+        
+        plt.plot(self.losses, alpha = 0.3, color = 'blue', label = "Raw Loss")
+        plt.plot(range(window - 1, len(self.losses)), np.convolve(self.losses, np.ones(window) / window, mode = 'valid'), label = "Smoothed Loss", color = 'blue')
+        
         plt.xlabel("Episode")
         plt.ylabel("Loss")
-        plt.title("Loss Curve for Tabular Q-Learning")
+        plt.suptitle("Loss Curve for Tabular Q-Learning")
+        plt.title(f"α = {'%.4f'%self.q_table.get_alpha()}, γ = {'%.4f'%(self.gamma)}, ε = {'%.4f'%self.epsilon}, ε_min = {'%.4f'%self.epsilon_min}, ε_decay = {'%.4f'%self.epsilon_decay}")
+        
         plt.savefig("qlt_loss.png")
+        plt.clf()
 
     def plot_accuracy(self):
         window = 10
@@ -118,17 +130,21 @@ class Agent:
 
         plt.figure(figsize = (10, 5))
         plt.plot(accuracy, alpha = 0.3, color = 'red', label = "Raw Accuracy")
-        plt.plot(np.convolve(accuracy, np.ones(window), 'valid') / window, color = 'red', label = "Smoothed Accuracy")
+        plt.plot(range(window - 1, len(accuracy)), np.convolve(accuracy, np.ones(window) / window, mode = 'valid'), label = "Smoothed Accuracy", color = 'red')
+
         plt.xlabel("Episode")
         plt.ylabel("Accuracy")
-        plt.title("Accuracy Curve for Tabular Q-Learning")
+        plt.suptitle("Accuracy Curve for Tabular Q-Learning")
+        plt.title(f"α = {'%.4f'%self.q_table.get_alpha()}, γ = {'%.4f'%(self.gamma)}, ε = {'%.4f'%self.epsilon}, ε_min = {'%.4f'%self.epsilon_min}, ε_decay = {'%.4f'%self.epsilon_decay}")
+
         plt.savefig("qlt_accuracy.png")
+        plt.clf()
 
     
 
 env = gym.make('Taxi-v3')
 agent = Agent(env, 0.1, 0.99, 1.0, 0.1, 0.995)
-episodes = 1000
+episodes = 8000
 agent.train(episodes)
 agent.plot_rewards()
 agent.plot_loss()
