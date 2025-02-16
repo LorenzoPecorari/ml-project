@@ -140,12 +140,18 @@ class Agent:
         plt.savefig("qlt_accuracy.png")
         plt.clf()
 
+if __name__ == "__main__":    
+    lr = 0.1
+    gamma = 0.99
+    epsilon = 1.0
+    epsilon_min = 0.1
+    epsilon_decay = 0.995
+    episodes = 8000
     
-
-env = gym.make('Taxi-v3')
-agent = Agent(env, 0.1, 0.99, 1.0, 0.1, 0.995)
-episodes = 8000
-agent.train(episodes)
-agent.plot_rewards()
-agent.plot_loss()
-agent.plot_accuracy()
+    env = gym.make("Taxi-v3")
+    agent = Agent(env, lr, gamma, epsilon, epsilon_min, epsilon_decay)
+    
+    agent.train(episodes)
+    agent.plot_rewards()
+    agent.plot_loss()
+    agent.plot_accuracy()
