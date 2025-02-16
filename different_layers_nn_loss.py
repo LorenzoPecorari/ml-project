@@ -138,7 +138,12 @@ class Agent:
             return None
         
         batch = self.replay_buffer.pick(batch_size)
-        states, actions, rewards, next_states, dones = zip(*batch)
+
+        states = [item[0] for item in batch]
+        actions = [item[1] for item in batch]
+        rewards = [item[2] for item in batch]
+        next_states = [item[3] for item in batch]
+        dones = [item[4] for item in batch]
 
         # transforming current and future state in tensors + correcting size
         states = torch.tensor(states, dtype=torch.long, device=self.device)
@@ -317,7 +322,7 @@ def train(episodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
             
             while not done:
                 action = a.select_action(state)
-                next_state, reward, terminated, truncated, info = env.step(action)
+                next_state, reward, terminated, truncated, _ = env.step(action)
 
                 if(terminated):
                     success = 1
