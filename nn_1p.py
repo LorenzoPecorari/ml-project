@@ -113,7 +113,7 @@ class Agent:
         # set device to elaborate information
         self.q_network.to(self.device)
         self.target_network.to(self.device)
-        self.optimizer = optim.Adam(self.q_network.parameters(), lr=lr)
+        self.optimizer = optim.SGD(self.q_network.parameters(), lr=lr)
         self.replay_buffer = ReplayBuffer(10000)
         self.update_target_network()
 
