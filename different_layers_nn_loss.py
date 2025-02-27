@@ -370,18 +370,18 @@ if __name__ == "__main__":
     action_dim=env.action_space.n,
     
     # standard hyperparameters
-    gamma = 0.99
-    epsilon = 1.0
-    epsilon_decay = 0.995
-    epsilon_min = 0.1
-    lr = 0.001
-
-    # new hyperparameters 1
     # gamma = 0.99
     # epsilon = 1.0
-    # epsilon_decay = 0.998
+    # epsilon_decay = 0.995
     # epsilon_min = 0.1
     # lr = 0.001
+
+    # new hyperparameters 1
+    gamma = 0.99
+    epsilon = 1.0
+    epsilon_decay = 0.998
+    epsilon_min = 0.1
+    lr = 0.001
 
     # new hyperparameters 2
     # gamma = 0.99
