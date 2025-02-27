@@ -15,11 +15,11 @@ import os
 # NN with 3 layers
 class L3_QNet(nn.Module):
 
-    def __init__(self,  action_dim):
+    def __init__(self, state_dim, action_dim):
         super(L3_QNet, self).__init__()
         self.layers = 3
-        self.input_layer = nn.Linear(1, 128)
-        self.hidden_layer = nn.Linear(128, 64)
+        self.input_layer = nn.Linear(state_dim, 64)
+        self.hidden_layer = nn.Linear(64, 64)
         self.output_layer = nn.Linear(64, action_dim)
 
     def forward(self, state):
@@ -31,10 +31,10 @@ class L3_QNet(nn.Module):
 # NN with 4 layers
 class L4_QNet(nn.Module):
 
-    def __init__(self,  action_dim):
+    def __init__(self, state_dim, action_dim):
         super(L4_QNet, self).__init__()
         self.layers = 4
-        self.input_layer = nn.Linear(1, 64)
+        self.input_layer = nn.Linear(state_dim, 64)
         self.hidden_layer_1 = nn.Linear(64, 64)
         self.hidden_layer_2 = nn.Linear(64, 64)
         self.output_layer = nn.Linear(64, action_dim)
@@ -48,10 +48,10 @@ class L4_QNet(nn.Module):
 # NN with 5 layers
 class L5_QNet(nn.Module):
     
-    def __init__(self,  action_dim):
+    def __init__(self, state_dim, action_dim):
         super(L5_QNet, self).__init__()
         self.layers = 5
-        self.input_layer = nn.Linear(1, 64)
+        self.input_layer = nn.Linear(state_dim, 64)
         self.hidden_layer_1 = nn.Linear(64, 64)
         self.hidden_layer_2 = nn.Linear(64, 64)
         self.hidden_layer_3 = nn.Linear(64, 64)
@@ -99,21 +99,22 @@ class Agent:
         # matching NN for given number of layers
         match(layers):
             case 3:    
-                self.q_network = L3_QNet(action_dim).to(self.device)
-                self.target_network = L3_QNet(action_dim).to(self.device)
+                self.q_network = L3_QNet(state_dim, action_dim).to(self.device)
+                self.target_network = L3_QNet(state_dim, action_dim).to(self.device)
 
             case 4:
-                self.q_network = L4_QNet(action_dim).to(self.device)
-                self.target_network = L4_QNet(action_dim).to(self.device)
+                self.q_network = L4_QNet(state_dim, action_dim).to(self.device)
+                self.target_network = L4_QNet(state_dim, action_dim).to(self.device)
                 
             case 5:
-                self.q_network = L5_QNet(action_dim).to(self.device)
-                self.target_network = L5_QNet(action_dim).to(self.device)
+                self.q_network = L5_QNet(state_dim, action_dim).to(self.device)
+                self.target_network = L5_QNet(state_dim, action_dim).to(self.device)
 
         # set device to elaborate information
         self.q_network.to(self.device)
         self.target_network.to(self.device)
         self.optimizer = optim.Adam(self.q_network.parameters(), lr=lr)
+        # self.optimizer = optim.SGD(self.q_network.parameters(), lr=lr)
         self.replay_buffer = ReplayBuffer(10000)
         self.update_target_network()
 
@@ -126,8 +127,9 @@ class Agent:
             return np.random.choice(self.action_dim)
         else:
             with torch.no_grad():
-                # conversion of state into tensor
-                state_tensor = torch.tensor([state], dtype=torch.float, device=self.device)
+                # conversion of tensors in one_hot
+                state_tensor = torch.tensor([state], dtype=torch.long, device=self.device)
+                state_tensor = F.one_hot(state_tensor, num_classes=self.state_dim).float()
                 q_values = self.q_network(state_tensor)
                 return q_values.argmax().item()
 
@@ -144,10 +146,14 @@ class Agent:
         next_states = [item[3] for item in batch]
         dones = [item[4] for item in batch]
 
-        states = torch.tensor(states, dtype=torch.float, device=self.device).unsqueeze(1)
-        actions = torch.tensor(actions, dtype=torch.long, device=self.device).unsqueeze(1)
+        # transforming current and future state in tensors + correcting size
+        states = torch.tensor(states, dtype=torch.long, device=self.device)
+        states = F.one_hot(states, num_classes=self.state_dim).float()
+        next_states = torch.tensor(next_states, dtype=torch.long, device=self.device)
+        next_states = F.one_hot(next_states, num_classes=self.state_dim).float()
+
+        actions = torch.tensor(actions, dtype=torch.long, device=self.device)
         rewards = torch.tensor(rewards, dtype=torch.float, device=self.device)
-        next_states = torch.tensor(next_states, dtype=torch.float, device=self.device).unsqueeze(1)
         dones = torch.tensor(dones, dtype=torch.float, device=self.device)
 
         # actual q-values and q-targets
@@ -155,12 +161,10 @@ class Agent:
         next_q_values = self.target_network(next_states)
 
         # q-values related to corresponding done actions
-        q_value = q_values.gather(1, actions).squeeze(1)
+        q_value = q_values.gather(1, actions.unsqueeze(1)).squeeze(1)
         next_q_value = next_q_values.max(1)[0]
         target = rewards + (self.gamma * next_q_value * (1 - dones))
 
-        # print(q_value, " - ", next_q_value)
-        
         loss = F.mse_loss(q_value, target)
 
         # network optimization
@@ -293,7 +297,7 @@ def train(episodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
                      lr = lr)
     
     L5_agent = Agent(layers = 5,
-                    state_dim=env.observation_space.n,
+                     state_dim=env.observation_space.n,
                      action_dim=env.action_space.n,
                      gamma = gamma, 
                      epsilon = epsilon, 
@@ -362,22 +366,36 @@ def train(episodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
 if __name__ == "__main__":
 
     env = gym.make("Taxi-v3")    
-    state_dim=env.observation_space.n
-    action_dim=env.action_space.n
+    state_dim=env.observation_space.n,
+    action_dim=env.action_space.n,
     
     # standard hyperparameters
+    gamma = 0.99
+    epsilon = 1.0
+    epsilon_decay = 0.995
+    epsilon_min = 0.1
+    lr = 0.001
+
+    # new hyperparameters 1
+    # gamma = 0.99
+    # epsilon = 1.0
+    # epsilon_decay = 0.998
+    # epsilon_min = 0.1
+    # lr = 0.001
+
+    # new hyperparameters 2
     # gamma = 0.99
     # epsilon = 1.0
     # epsilon_decay = 0.995
     # epsilon_min = 0.1
     # lr = 0.0005
 
-    # new hyperparameters
-    gamma = 0.99
-    epsilon = 1.0
-    epsilon_decay = 0.99995
-    epsilon_min = 0.05
-    lr = 0.001
+    # new hyperparameters 3
+    # gamma = 0.99
+    # epsilon = 1.0
+    # epsilon_decay = 0.998
+    # epsilon_min = 0.1
+    # lr = 0.0005
 
     episodes = 8000
     train(episodes, gamma, epsilon, epsilon_decay, epsilon_min, lr)
