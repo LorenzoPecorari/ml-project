@@ -16,9 +16,9 @@ class L3_QNet(nn.Module):
     def __init__(self, state_dim, action_dim):
         super(L3_QNet, self).__init__()
         self.layers=3
-        self.input_layer=nn.Linear(state_dim, 64)
-        self.hidden_layer=nn.Linear(64, 64)
-        self.output_layer=nn.Linear(64, action_dim)
+        self.input_layer=nn.Linear(state_dim, 96)
+        self.hidden_layer=nn.Linear(96, 96)
+        self.output_layer=nn.Linear(96, action_dim)
 
     def forward(self, state):
         out1=torch.relu(self.input_layer(state))
@@ -29,10 +29,10 @@ class L4_QNet(nn.Module):
     def __init__(self, state_dim, action_dim):
         super(L4_QNet, self).__init__()
         self.layers=4
-        self.input_layer=nn.Linear(state_dim, 64)
-        self.hidden_layer_1=nn.Linear(64, 64)
-        self.hidden_layer_2=nn.Linear(64, 64)
-        self.output_layer=nn.Linear(64, action_dim)
+        self.input_layer=nn.Linear(state_dim, 96)
+        self.hidden_layer_1=nn.Linear(96, 96)
+        self.hidden_layer_2=nn.Linear(96, 96)
+        self.output_layer=nn.Linear(96, action_dim)
 
     def forward(self, state):
         out1=torch.relu(self.input_layer(state))
@@ -44,11 +44,11 @@ class L5_QNet(nn.Module):
     def __init__(self, state_dim, action_dim):
         super(L5_QNet, self).__init__()
         self.layers=5
-        self.input_layer=nn.Linear(state_dim, 16)
-        self.hidden_layer_1=nn.Linear(16, 16)
-        self.hidden_layer_2=nn.Linear(16, 16)
-        self.hidden_layer_3=nn.Linear(16, 16)
-        self.output_layer=nn.Linear(16, action_dim)
+        self.input_layer=nn.Linear(state_dim, 96)
+        self.hidden_layer_1=nn.Linear(96, 96)
+        self.hidden_layer_2=nn.Linear(96, 96)
+        self.hidden_layer_3=nn.Linear(96, 96)
+        self.output_layer=nn.Linear(96, action_dim)
 
     def forward(self, state):
         out1=torch.relu(self.input_layer(state))
@@ -107,7 +107,7 @@ class Agent:
                 q_values=self.q_network(state_tensor)
                 return q_values.argmax().item()
     
-    def replay(self, batch_size=64):
+    def replay(self, batch_size):
         if self.replay_buffer.sizeof() < batch_size:
             return None
         
@@ -265,15 +265,15 @@ def train(epsiodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
                     epsilon_min=epsilon_min,
                     lr=lr)
 
-    # agents=[L3_agent, L4_agent, L5_agent]
-    agents=[L5_agent]
+    agents=[L3_agent, L4_agent, L5_agent]
+    # agents=[L3_agent]
 
     for a in agents:
         rewards=[]
         losses_per_episode=[]
         successes=[]
 
-        a.load_train(str(a.layers) + "L,pth")
+        # a.load_train(str(a.layers) + "L.pth")
 
         for e in range(epsiodes):
             state, _ =env.reset()
@@ -291,7 +291,7 @@ def train(epsiodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
 
                 done= terminated or truncated
                 a.replay_buffer.push(state, action, reward, next_state, done)
-                loss_val=a.replay(batch_size=64)
+                loss_val=a.replay(64)
                 if loss_val is not None:
                     episode_losses.append(loss_val)
                 state=next_state
@@ -329,7 +329,7 @@ if __name__=="__main__":
 
     gamma=0.99
     epsilon=1.0
-    epslion_decay=0.995
+    epslion_decay=0.998
     epsilon_min=0.1
     lr=0.001
     episodes=8000
