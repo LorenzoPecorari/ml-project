@@ -1,0 +1,7 @@
+gamma=0.99
+epsilon=1.0
+epslion_decay=0.998
+epsilon_min=0.1
+lr=0.001
+episodes=8000
+layer_size=16
