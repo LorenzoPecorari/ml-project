@@ -16,9 +16,9 @@ class L3_QNet(nn.Module):
     def __init__(self, state_dim, action_dim):
         super(L3_QNet, self).__init__()
         self.layers=3
-        self.input_layer=nn.Linear(state_dim, 96)
-        self.hidden_layer=nn.Linear(96, 96)
-        self.output_layer=nn.Linear(96, action_dim)
+        self.input_layer=nn.Linear(state_dim, 64)
+        self.hidden_layer=nn.Linear(64, 64)
+        self.output_layer=nn.Linear(64, action_dim)
 
     def forward(self, state):
         out1=torch.relu(self.input_layer(state))
@@ -29,10 +29,10 @@ class L4_QNet(nn.Module):
     def __init__(self, state_dim, action_dim):
         super(L4_QNet, self).__init__()
         self.layers=4
-        self.input_layer=nn.Linear(state_dim, 96)
-        self.hidden_layer_1=nn.Linear(96, 96)
-        self.hidden_layer_2=nn.Linear(96, 96)
-        self.output_layer=nn.Linear(96, action_dim)
+        self.input_layer=nn.Linear(state_dim, 64)
+        self.hidden_layer_1=nn.Linear(64, 64)
+        self.hidden_layer_2=nn.Linear(64, 64)
+        self.output_layer=nn.Linear(64, action_dim)
 
     def forward(self, state):
         out1=torch.relu(self.input_layer(state))
@@ -44,11 +44,11 @@ class L5_QNet(nn.Module):
     def __init__(self, state_dim, action_dim):
         super(L5_QNet, self).__init__()
         self.layers=5
-        self.input_layer=nn.Linear(state_dim, 96)
-        self.hidden_layer_1=nn.Linear(96, 96)
-        self.hidden_layer_2=nn.Linear(96, 96)
-        self.hidden_layer_3=nn.Linear(96, 96)
-        self.output_layer=nn.Linear(96, action_dim)
+        self.input_layer=nn.Linear(state_dim, 64)
+        self.hidden_layer_1=nn.Linear(64, 64)
+        self.hidden_layer_2=nn.Linear(64, 64)
+        self.hidden_layer_3=nn.Linear(64, 64)
+        self.output_layer=nn.Linear(64, action_dim)
 
     def forward(self, state):
         out1=torch.relu(self.input_layer(state))
@@ -265,8 +265,8 @@ def train(epsiodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
                     epsilon_min=epsilon_min,
                     lr=lr)
 
-    agents=[L3_agent, L4_agent, L5_agent]
-    # agents=[L3_agent]
+    # agents=[L3_agent, L4_agent, L5_agent]
+    agents=[L3_agent, L4_agent]
 
     for a in agents:
         rewards=[]
@@ -329,7 +329,7 @@ if __name__=="__main__":
 
     gamma=0.99
     epsilon=1.0
-    epslion_decay=0.998
+    epslion_decay=0.995
     epsilon_min=0.1
     lr=0.001
     episodes=8000
