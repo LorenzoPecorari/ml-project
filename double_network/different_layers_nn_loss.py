@@ -35,8 +35,8 @@ class L4_QNet(nn.Module):
         super(L4_QNet, self).__init__()
         self.layers = 4
         self.input_layer = nn.Linear(state_dim, 64)
-        self.hidden_layer_1 = nn.Linear(64, 64)
         self.hidden_layer_2 = nn.Linear(64, 64)
+        self.hidden_layer_1 = nn.Linear(64, 64)
         self.output_layer = nn.Linear(64, action_dim)
 
     def forward(self, state):
@@ -134,7 +134,7 @@ class Agent:
                 return q_values.argmax().item()
 
    # training of network by using the agent
-    def train(self, batch_size=64):
+    def replay(self, batch_size=64):
         if self.replay_buffer.sizeof() < batch_size:
             return None
         
@@ -172,10 +172,6 @@ class Agent:
         loss.backward()
         self.optimizer.step()
 
-        # epsilon update
-        if self.epsilon > self.epsilon_min:
-            self.epsilon *= self.epsilon_decay
-        
         return loss.item()
     
     def save_train(self):
@@ -306,6 +302,7 @@ def train(episodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
                      lr = lr)
 
     agents = [L3_agent, L4_agent, L5_agent]
+    # agents = [L5_agent]
         
     for a in agents:
         rewards = []
@@ -332,7 +329,7 @@ def train(episodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
 
                 # store states, update state and total reward
                 a.replay_buffer.push(state, action, reward, next_state, done)
-                loss_val = a.train(batch_size=64)
+                loss_val = a.replay(batch_size=64)
                 if loss_val is not None:
                     episode_losses.append(loss_val)
                 state = next_state
@@ -349,6 +346,10 @@ def train(episodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
             else:
                 losses_per_episode.append(0)
 
+            # epsilon update
+            if a.epsilon > a.epsilon_min:
+                a.epsilon *= a.epsilon_decay
+            
             successes.append(success)            
             rewards.append(total_reward)
             print(f"Agent {a.layers}L - Episode {e}, Total Reward: {total_reward}, ε: {a.epsilon:.4f}, Avg Loss: {losses_per_episode[-1]:.6f}")
@@ -379,7 +380,7 @@ if __name__ == "__main__":
     # new hyperparameters 1
     gamma = 0.99
     epsilon = 1.0
-    epsilon_decay = 0.998
+    epsilon_decay = 0.995
     epsilon_min = 0.1
     lr = 0.001
 
