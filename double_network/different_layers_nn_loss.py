@@ -18,9 +18,9 @@ class L3_QNet(nn.Module):
     def __init__(self, state_dim, action_dim):
         super(L3_QNet, self).__init__()
         self.layers = 3
-        self.input_layer = nn.Linear(state_dim, 64)
-        self.hidden_layer = nn.Linear(64, 64)
-        self.output_layer = nn.Linear(64, action_dim)
+        self.input_layer = nn.Linear(state_dim, 48)
+        self.hidden_layer = nn.Linear(48, 48)
+        self.output_layer = nn.Linear(48, action_dim)
 
     def forward(self, state):
         out1 = torch.relu(self.input_layer(state))
@@ -34,10 +34,10 @@ class L4_QNet(nn.Module):
     def __init__(self, state_dim, action_dim):
         super(L4_QNet, self).__init__()
         self.layers = 4
-        self.input_layer = nn.Linear(state_dim, 64)
-        self.hidden_layer_2 = nn.Linear(64, 64)
-        self.hidden_layer_1 = nn.Linear(64, 64)
-        self.output_layer = nn.Linear(64, action_dim)
+        self.input_layer = nn.Linear(state_dim, 48)
+        self.hidden_layer_2 = nn.Linear(48, 48)
+        self.hidden_layer_1 = nn.Linear(48, 48)
+        self.output_layer = nn.Linear(48, action_dim)
 
     def forward(self, state):
         out1 = torch.relu(self.input_layer(state))
@@ -51,11 +51,11 @@ class L5_QNet(nn.Module):
     def __init__(self, state_dim, action_dim):
         super(L5_QNet, self).__init__()
         self.layers = 5
-        self.input_layer = nn.Linear(state_dim, 64)
-        self.hidden_layer_1 = nn.Linear(64, 64)
-        self.hidden_layer_2 = nn.Linear(64, 64)
-        self.hidden_layer_3 = nn.Linear(64, 64)
-        self.output_layer = nn.Linear(64, action_dim)
+        self.input_layer = nn.Linear(state_dim, 48)
+        self.hidden_layer_1 = nn.Linear(48, 48)
+        self.hidden_layer_2 = nn.Linear(48, 48)
+        self.hidden_layer_3 = nn.Linear(48, 48)
+        self.output_layer = nn.Linear(48, action_dim)
 
     def forward(self, state):
         out1 = torch.relu(self.input_layer(state))
