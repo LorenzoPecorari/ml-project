@@ -141,11 +141,11 @@ class Agent:
         plt.clf()
 
 if __name__ == "__main__":    
-    lr = 0.1
+    lr = 0.0005
     gamma = 0.99
     epsilon = 1.0
     epsilon_min = 0.1
-    epsilon_decay = 0.995
+    epsilon_decay = 0.998
     episodes = 8000
     
     env = gym.make("Taxi-v3")
