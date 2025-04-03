@@ -82,8 +82,6 @@ class ReplayBuffer:
 # Agent for NN
 class Agent:
     def __init__(self, layers, state_dim, action_dim, gamma, epsilon, epsilon_decay, epsilon_min, lr):
-        # gamma=0.99, epsilon=1.0, 
-        #          epsilon_decay=0.995, epsilon_min=0.1, lr=0.0005
         
         self.state_dim = state_dim      # Dimensions of state
         self.action_dim = action_dim    # Possible actions
@@ -114,7 +112,6 @@ class Agent:
         self.q_network.to(self.device)
         self.target_network.to(self.device)
         self.optimizer = optim.Adam(self.q_network.parameters(), lr=lr)
-        # self.optimizer = optim.SGD(self.q_network.parameters(), lr=lr)
         self.replay_buffer = ReplayBuffer(10000)
         self.update_target_network()
 
@@ -127,7 +124,7 @@ class Agent:
             return np.random.choice(self.action_dim)
         else:
             with torch.no_grad():
-                # conversion of tensors in one_hot
+                # conversion in tensors and in "one_hot"s
                 state_tensor = torch.tensor([state], dtype=torch.long, device=self.device)
                 state_tensor = F.one_hot(state_tensor, num_classes=self.state_dim).float()
                 q_values = self.q_network(state_tensor)
@@ -187,31 +184,6 @@ class Agent:
                 self.q_network.load_state_dict(torch.load(filepath, weights_only=True))
                 self.target_network.load_state_dict(torch.load(filepath, weights_only=True))
                 
-
-    # old rewards plotting function
-    def plot_rewards(self, rewards, layers):
-        avg = []
-        
-        lenght = len(rewards)
-        interval = int(lenght / 10)
-        
-        for elem in range(0, interval):
-            tmp = 0
-            
-            for i in range(0, 10):
-                tmp += rewards[(elem * 10) + i]
-            
-            tmp = tmp / interval
-            avg.append(tmp)
-            
-        plt.plot(avg)
-        plt.xlabel("Episodes")
-        plt.ylabel("Rewards")
-        plt.suptitle(f"Reward curve for NN with {self.layers} layers\n")
-        plt.title(f"γ = {'%.3f'%(self.gamma)}, ε = {'%.3f'%(self.epsilon)}, ε_dec = {'%.3f'%(self.epsilon_decay)}, ε_min = {'%.3f'%(self.epsilon_min)}, lr = {'%.3f'%(self.lr)}")
-        plt.savefig(f"{layers}L_rewards.jpg")
-        plt.clf()
-
     # plotting rewards using mobile window of 10 episodes
     def plot_rewards_smoothed(self, rewards, layers):
         window = 10
@@ -302,20 +274,19 @@ def train(episodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
                      lr = lr)
 
     agents = [L3_agent, L4_agent, L5_agent]
-    # agents = [L5_agent]
         
     for a in agents:
         rewards = []
         losses_per_episode = [] 
         successes = []
 
-        a.load_train(str(a.layers) + "L.pth")
+        # a.load_train(str(a.layers) + "L.pth")
 
         for e in range(episodes):
             state, _ = env.reset() # for obtaining (observation, info) tuple
             done = False
             total_reward = 0
-            episode_losses = []  # loss per episodes stored here
+            episode_losses = []  # loss per episodes stored
             success = 0
             
             while not done:
@@ -335,7 +306,7 @@ def train(episodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
                 state = next_state
                 total_reward += reward
 
-            # each 10 episodes update the network
+            # each 10 episodes update target network
             if e % 10 == 0:
                 a.update_target_network()
             
@@ -370,28 +341,14 @@ if __name__ == "__main__":
     state_dim=env.observation_space.n,
     action_dim=env.action_space.n,
     
-    # standard hyperparameters
-    # gamma = 0.99
-    # epsilon = 1.0
-    # epsilon_decay = 0.995
-    # epsilon_min = 0.1
-    # lr = 0.001
-
-    # new hyperparameters 1
+    # hyperparameters 1
     gamma = 0.99
     epsilon = 1.0
     epsilon_decay = 0.995
     epsilon_min = 0.1
     lr = 0.001
-
-    # new hyperparameters 2
-    # gamma = 0.99
-    # epsilon = 1.0
-    # epsilon_decay = 0.995
-    # epsilon_min = 0.1
-    # lr = 0.0005
-
-    # new hyperparameters 3
+    
+    # hyperparameters 2
     # gamma = 0.99
     # epsilon = 1.0
     # epsilon_decay = 0.998
@@ -400,7 +357,3 @@ if __name__ == "__main__":
 
     episodes = 8000
     train(episodes, gamma, epsilon, epsilon_decay, epsilon_min, lr)
-
-    # print(os.path.isfile("./trains/3L.pth"))
-    # L3_agent = Agent(3, state_dim[0], action_dim[0], gamma, epsilon, epsilon_decay, epsilon_min, lr)
-    # L3_agent.load_train("3L.pth")

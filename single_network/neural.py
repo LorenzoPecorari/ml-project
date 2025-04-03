@@ -94,9 +94,6 @@ class Agent:
         self.optimizer=optim.Adam(self.q_network.parameters(), lr=lr)
         self.replay_buffer=ReplayBuffer(10000)
 
-    def update_network(self):
-        self.q_network.load_state_dict(self.q_network.state_dict())
-
     def select_action(self, state):
         if np.random.rand()<=self.epsilon:
             return np.random.choice(self.action_dim)
@@ -152,30 +149,6 @@ class Agent:
         
         if(os.path.isfile(filepath)):
                 self.q_network.load_state_dict(torch.load(filepath, weights_only=True))
-
-    # old rewards plotting function
-    def plot_rewards(self, rewards, layers):
-        avg = []
-        
-        lenght = len(rewards)
-        interval = int(lenght / 10)
-        
-        for elem in range(0, interval):
-            tmp = 0
-            
-            for i in range(0, 10):
-                tmp += rewards[(elem * 10) + i]
-            
-            tmp = tmp / interval
-            avg.append(tmp)
-            
-        plt.plot(avg)
-        plt.xlabel("Episodes")
-        plt.ylabel("Rewards")
-        plt.suptitle(f"Reward curve for NN with {self.layers} layers\n")
-        plt.title(f"γ = {'%.3f'%(self.gamma)}, ε = {'%.3f'%(self.epsilon)}, ε_dec = {'%.3f'%(self.epsilon_decay)}, ε_min = {'%.3f'%(self.epsilon_min)}, lr = {'%.3f'%(self.lr)}")
-        plt.savefig(f"{layers}L_rewards.jpg")
-        plt.clf()
 
     # plotting rewards using mobile window of 10 episodes
     def plot_rewards_smoothed(self, rewards, layers):
@@ -265,8 +238,7 @@ def train(epsiodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
                     epsilon_min=epsilon_min,
                     lr=lr)
 
-    # agents=[L3_agent, L4_agent, L5_agent]
-    agents=[L3_agent, L4_agent]
+    agents=[L3_agent, L4_agent, L5_agent]
 
     for a in agents:
         rewards=[]
@@ -299,9 +271,6 @@ def train(epsiodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
 
             if a.epsilon>a.epsilon_min:
                 a.epsilon*=a.epsilon_decay
-
-            if e%5==0:
-                a.update_network()
 
             if len(episode_losses)>0:
                 avg_loss=np.mean(episode_losses)
