@@ -5,12 +5,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class QTable:
-    def __init__(self, alpha, states, actions):
+    def __init__(self, states, actions):
         self.table = np.zeros((states, actions))
-        self.alpha = alpha
 
     def update(self, state, action, reward, next_state, gamma):
-        self.table[int(state)][action] = self.table[state][action] + self.alpha * (reward + gamma * np.max(self.table[next_state]) - self.table[state][action])
+        self.table[int(state)][action] = reward + gamma * np.max(self.table[next_state])
         return self.table[state][action]
     
     def get_row(self, state):
@@ -18,18 +17,12 @@ class QTable:
             state = state[0]
 
         return self.table[state]
-
-    def get_item(self, state, action):
-        return self.table[state][action]
-    
-    def get_alpha(self):
-        return self.alpha
     
 class Agent:
-    def __init__(self, env, alpha, gamma, epsilon, epsilon_min, epsilon_decay):
+    def __init__(self, env, gamma, epsilon, epsilon_min, epsilon_decay):
         self.env = env
         
-        self.q_table = QTable(alpha, env.observation_space.n, env.action_space.n)
+        self.q_table = QTable(env.observation_space.n, env.action_space.n)
         
         self.gamma = gamma
         self.epsilon = epsilon
@@ -47,10 +40,10 @@ class Agent:
             return np.argmax(self.q_table.get_row(state))
         
     def update_table(self, state, action, reward, next_state):
-        q = self.q_table.get_item(state, action)
+        q = self.q_table.table[state, action]
         new_q = self.q_table.update(state, action, reward, next_state, self.gamma)
-        loss = (new_q - q) ** 2
-        return loss
+        # loss = (new_q - q) ** 2 # tecnicamente da rimuovere, non usata in q-learning
+        return 0
 
     def train(self, episodes):
         for e in range(0, episodes):
@@ -99,9 +92,9 @@ class Agent:
         plt.xlabel("Episode")
         plt.ylabel("Reward")
         plt.suptitle("Reward Curve for Tabular Q-Learning")
-        plt.title(f"α = {'%.4f'%self.q_table.get_alpha()}, γ = {'%.4f'%(self.gamma)}, ε = {'%.4f'%self.epsilon}, ε_min = {'%.4f'%self.epsilon_min}, ε_decay = {'%.4f'%self.epsilon_decay}")
+        plt.title(f"γ = {'%.4f'%(self.gamma)}, ε = {'%.4f'%self.epsilon}, ε_min = {'%.4f'%self.epsilon_min}, ε_decay = {'%.4f'%self.epsilon_decay}")
         
-        plt.savefig("qlt_rewards.png")
+        plt.savefig("qlt_rewards.pdf")
         plt.clf()
 
     def plot_loss(self):
@@ -114,9 +107,9 @@ class Agent:
         plt.xlabel("Episode")
         plt.ylabel("Loss")
         plt.suptitle("Loss Curve for Tabular Q-Learning")
-        plt.title(f"α = {'%.4f'%self.q_table.get_alpha()}, γ = {'%.4f'%(self.gamma)}, ε = {'%.4f'%self.epsilon}, ε_min = {'%.4f'%self.epsilon_min}, ε_decay = {'%.4f'%self.epsilon_decay}")
+        plt.title(f"γ = {'%.4f'%(self.gamma)}, ε = {'%.4f'%self.epsilon}, ε_min = {'%.4f'%self.epsilon_min}, ε_decay = {'%.4f'%self.epsilon_decay}")
         
-        plt.savefig("qlt_loss.png")
+        plt.savefig("qlt_loss.pdf")
         plt.clf()
 
     def plot_accuracy(self):
@@ -135,21 +128,20 @@ class Agent:
         plt.xlabel("Episode")
         plt.ylabel("Accuracy")
         plt.suptitle("Accuracy Curve for Tabular Q-Learning")
-        plt.title(f"α = {'%.4f'%self.q_table.get_alpha()}, γ = {'%.4f'%(self.gamma)}, ε = {'%.4f'%self.epsilon}, ε_min = {'%.4f'%self.epsilon_min}, ε_decay = {'%.4f'%self.epsilon_decay}")
+        plt.title(f"γ = {'%.4f'%(self.gamma)}, ε = {'%.4f'%self.epsilon}, ε_min = {'%.4f'%self.epsilon_min}, ε_decay = {'%.4f'%self.epsilon_decay}")
 
-        plt.savefig("qlt_accuracy.png")
+        plt.savefig("qlt_accuracy.pdf")
         plt.clf()
 
 if __name__ == "__main__":    
-    lr = 0.0005
     gamma = 0.99
     epsilon = 1.0
     epsilon_min = 0.1
-    epsilon_decay = 0.998
-    episodes = 8000
+    epsilon_decay = 0.9
+    episodes = 256
     
     env = gym.make("Taxi-v3")
-    agent = Agent(env, lr, gamma, epsilon, epsilon_min, epsilon_decay)
+    agent = Agent(env, gamma, epsilon, epsilon_min, epsilon_decay)
     
     agent.train(episodes)
     agent.plot_rewards()
