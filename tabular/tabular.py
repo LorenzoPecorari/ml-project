@@ -131,14 +131,16 @@ def plot_rewards(structure, filename):
     for elemento in structure:
         plt.plot(elemento[1], label=f"{elemento[0]} - raw")
         # plt.plot(
-        #     range(window - 1, len(elemento)),
-        #     np.convolve(elemento, np.ones(window) / window, mode='valid'),
-        #     label=f"Run {structure.index(elemento)} - smooth"
+            # range(window - 1, len(elemento[1])),
+            # np.convolve(elemento[1], np.ones(window) / window, mode='valid'),
+            # label=f"{elemento[0]} - smooth"
         # )
     plt.xlabel("Episode")
     plt.ylabel("Reward")
     plt.suptitle("Rewards Curve for Tabular Q-Learning")
     plt.legend()
+    plt.grid()
+    # plt.ylim(-500, 20)
     plt.savefig(f"{filename}_const_rewards.pdf")
 
 
@@ -166,45 +168,107 @@ def plot_accuracies(structure, filename):
     plt.ylabel("Accuracy")
     plt.suptitle("Accuracy Curve for Tabular Q-Learning")
     plt.legend()
+    plt.grid()
     plt.savefig(f"{filename}_const_accuracy.pdf")
+
+def plot_rewards_zoom(structure, filename):
+    window = 10
+    plt.figure(figsize=(10, 5))
+    for elemento in structure:
+        # plt.plot(elemento[1], label=f"{elemento[0]} - raw")
+        plt.plot(
+            range(window - 1, len(elemento[1])),
+            np.convolve(elemento[1], np.ones(window) / window, mode='valid'),
+            label=f"{elemento[0]} - smooth"
+        )
+    plt.xlabel("Episode")
+    plt.ylabel("Reward")
+    plt.suptitle("Rewards Curve for Tabular Q-Learning")
+    plt.legend()
+    plt.grid()
+    plt.ylim(-100, 20)
+    plt.savefig(f"{filename}_const_rewards_zoom.pdf")
 
 if __name__ == "__main__":
 
+    env = gym.make("Taxi-v3")
     rewards = []
     accuracies = []
-    episodes = 125
 
-    gamma = 0.5
+    ### TESTS FOR CONSTANT GAMMA 
+
+    episodes = 500
+    gamma = 0.9
     epsilon = 1.0
     epsilon_min = 0.1
-    epsilon_decay = 0.5
-    
-    env = gym.make("Taxi-v3")
+
+    epsilon_decay = 0.998
     agent = Agent(env, gamma, epsilon, epsilon_min, epsilon_decay)
-    
+    agent.train(episodes)    
+    rewards.append([f"γ: {agent.gamma}, ε_dec: {agent.epsilon_decay}", agent.get_rewards()])
+    accuracies.append([f"γ: {agent.gamma}, ε_dec: {agent.epsilon_decay}", agent.get_successes()])
+ 
+    # epsilon_decay = 0.995
+    # agent = Agent(env, gamma, epsilon, epsilon_min, epsilon_decay)    
+    # agent.train(episodes)
+    # rewards.append([f"γ: {agent.gamma}, ε_dec: {agent.epsilon_decay}", agent.get_rewards()])
+    # accuracies.append([f"γ: {agent.gamma}, ε_dec: {agent.epsilon_decay}", agent.get_successes()])
+
+    epsilon_decay = 0.95
+    agent = Agent(env, gamma, epsilon, epsilon_min, epsilon_decay)    
+    agent.train(episodes)
     rewards.append([f"γ: {agent.gamma}, ε_dec: {agent.epsilon_decay}", agent.get_rewards()])
     accuracies.append([f"γ: {agent.gamma}, ε_dec: {agent.epsilon_decay}", agent.get_successes()])
 
-    agent.train(episodes)
-    # agent.plot_rewards()
-    # agent.plot_accuracy()
+    # epsilon_decay = 0.9
+    # agent = Agent(env, gamma, epsilon, epsilon_min, epsilon_decay)
+    # agent.train(episodes)
+    # rewards.append([f"γ: {agent.gamma}, ε_dec: {agent.epsilon_decay}", agent.get_rewards()])
+    # accuracies.append([f"γ: {agent.gamma}, ε_dec: {agent.epsilon_decay}", agent.get_successes()])
 
-    gamma = 0.99
-    epsilon = 1.0
-    epsilon_min = 0.1
-    epsilon_decay = 0.995
-    
-    env = gym.make("Taxi-v3")
+    epsilon_decay = 0.85
     agent = Agent(env, gamma, epsilon, epsilon_min, epsilon_decay)
-    
     agent.train(episodes)
-    # agent.plot_rewards()
-    # agent.plot_accuracy()
-
     rewards.append([f"γ: {agent.gamma}, ε_dec: {agent.epsilon_decay}", agent.get_rewards()])
     accuracies.append([f"γ: {agent.gamma}, ε_dec: {agent.epsilon_decay}", agent.get_successes()])
 
     plot_rewards(rewards, f"γ_{agent.gamma}")
     plot_accuracies(accuracies, f"γ_{agent.gamma}")
+    plot_rewards_zoom(rewards, f"γ_{agent.gamma}")
 
-    a = input()
+    ### TESTS FOR CONSTANT E_DECs
+    # epsilon_decay = 0.998
+    # agent = Agent(env, gamma, epsilon, epsilon_min, epsilon_decay)
+    # agent.train(episodes)    
+    # rewards.append([f"γ: {agent.gamma}, ε_dec: {agent.epsilon_decay}", agent.get_rewards()])
+    # accuracies.append([f"γ: {agent.gamma}, ε_dec: {agent.epsilon_decay}", agent.get_successes()])
+
+    # epsilon_decay = 0.995
+    # agent = Agent(env, gamma, epsilon, epsilon_min, epsilon_decay)    
+    # agent.train(episodes)
+    # rewards.append([f"γ: {agent.gamma}, ε_dec: {agent.epsilon_decay}", agent.get_rewards()])
+    # accuracies.append([f"γ: {agent.gamma}, ε_dec: {agent.epsilon_decay}", agent.get_successes()])
+
+    # gamma = 0.9
+
+    # epsilon_decay = 0.95   
+    # agent = Agent(env, gamma, epsilon, epsilon_min, epsilon_decay)    
+    # agent.train(episodes)
+    # rewards.append([f"γ: {agent.gamma}, ε_dec: {agent.epsilon_decay}", agent.get_rewards()])
+    # accuracies.append([f"γ: {agent.gamma}, ε_dec: {agent.epsilon_decay}", agent.get_successes()])
+
+    # epsilon_decay = 0.9
+    # agent = Agent(env, gamma, epsilon, epsilon_min, epsilon_decay)
+    # agent.train(episodes)
+    # rewards.append([f"γ: {agent.gamma}, ε_dec: {agent.epsilon_decay}", agent.get_rewards()])
+    # accuracies.append([f"γ: {agent.gamma}, ε_dec: {agent.epsilon_decay}", agent.get_successes()])
+
+    # epsilon_decay = 0.85
+    # agent = Agent(env, gamma, epsilon, epsilon_min, epsilon_decay)
+    # agent.train(episodes)
+    # rewards.append([f"γ: {agent.gamma}, ε_dec: {agent.epsilon_decay}", agent.get_rewards()])
+    # accuracies.append([f"γ: {agent.gamma}, ε_dec: {agent.epsilon_decay}", agent.get_successes()])
+
+    # plot_rewards(rewards, f"γ_{agent.gamma}")
+    # plot_accuracies(accuracies, f"γ_{agent.gamma}")
+    # plot_rewards_zoom(accuracies, f"γ_{agent.gamma}")
