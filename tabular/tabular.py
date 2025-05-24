@@ -125,7 +125,7 @@ class Agent:
         plt.savefig(f"./plots/qlt_accuracy_{str(self.epsilon_decay * 100)}_{str(self.gamma * 100)}.pdf")
         # plt.clf()
 
-def plot_rewards(structure):
+def plot_rewards(structure, filename):
     window = 10
     plt.figure(figsize=(10, 5))
     for elemento in structure:
@@ -139,9 +139,10 @@ def plot_rewards(structure):
     plt.ylabel("Reward")
     plt.suptitle("Rewards Curve for Tabular Q-Learning")
     plt.legend()
-    plt.show()
+    plt.savefig(f"{filename}_const_rewards.pdf")
 
-def plot_accuracies(structure):
+
+def plot_accuracies(structure, filename):
     window = 10
     plt.figure(figsize=(10, 5))
     for elemento in structure:
@@ -165,7 +166,7 @@ def plot_accuracies(structure):
     plt.ylabel("Accuracy")
     plt.suptitle("Accuracy Curve for Tabular Q-Learning")
     plt.legend()
-    plt.show()
+    plt.savefig(f"{filename}_const_accuracy.pdf")
 
 if __name__ == "__main__":
 
@@ -203,7 +204,7 @@ if __name__ == "__main__":
     rewards.append([f"γ: {agent.gamma}, ε_dec: {agent.epsilon_decay}", agent.get_rewards()])
     accuracies.append([f"γ: {agent.gamma}, ε_dec: {agent.epsilon_decay}", agent.get_successes()])
 
-    plot_rewards(rewards)
-    plot_accuracies(accuracies)
+    plot_rewards(rewards, f"γ_{agent.gamma}")
+    plot_accuracies(accuracies, f"γ_{agent.gamma}")
 
     a = input()
