@@ -2,6 +2,10 @@ import gymnasium as gym
 import random
 
 import numpy as np
+
+import matplotlib
+# matplotlib.use('TkAgg')
+
 import matplotlib.pyplot as plt
 
 class QTable:
@@ -40,10 +44,7 @@ class Agent:
             return np.argmax(self.q_table.get_row(state))
         
     def update_table(self, state, action, reward, next_state):
-        q = self.q_table.table[state, action]
-        new_q = self.q_table.update(state, action, reward, next_state, self.gamma)
-        # loss = (new_q - q) ** 2 # tecnicamente da rimuovere, non usata in q-learning
-        return 0
+        self.q_table.update(state, action, reward, next_state, self.gamma)
 
     def train(self, episodes):
         for e in range(0, episodes):
@@ -51,7 +52,6 @@ class Agent:
             done = False
 
             temp_reward = 0
-            loss = 0
             steps = 0
             success = 0
 
@@ -67,7 +67,7 @@ class Agent:
                     next_state = next_state[0]
                 
                 temp_reward += reward
-                loss = self.update_table(state, action, reward, next_state)
+                self.update_table(state, action, reward, next_state)
                 state = next_state
                 steps += 1
 
@@ -75,7 +75,6 @@ class Agent:
                 success = 1
 
             self.rewards.append(temp_reward)
-            self.losses.append(np.mean(loss))            
             self.successes.append(success)
 
             if(self.epsilon > self.epsilon_min):
@@ -83,34 +82,26 @@ class Agent:
             
             print(f"QLT - Episode: {e}, \tReward: {temp_reward}, \t\tε: {self.epsilon}")
 
+    def get_rewards(self):
+        return self.rewards
+    
+    def get_successes(self):
+        return self.successes
+
     def plot_rewards(self):
         window = 10
         plt.figure(figsize = (10, 5))
-        plt.plot(self.rewards, alpha = 0.3, color = 'green', label = "Raw Reward")
-        plt.plot(range(window - 1, len(self.rewards)), np.convolve(self.rewards, np.ones(window) / window, mode = 'valid'), label = "Smoothed Rewards", color = 'green')
+        plt.plot(self.rewards, color = 'green', label = "Raw Reward")
+        # plt.plot(range(window - 1, len(self.rewards)), np.convolve(self.rewards, np.ones(window) / window, mode = 'valid'), label = "Smoothed Rewards")
         
         plt.xlabel("Episode")
         plt.ylabel("Reward")
         plt.suptitle("Reward Curve for Tabular Q-Learning")
-        plt.title(f"γ = {'%.4f'%(self.gamma)}, ε = {'%.4f'%self.epsilon}, ε_min = {'%.4f'%self.epsilon_min}, ε_decay = {'%.4f'%self.epsilon_decay}")
+        # plt.title(f"γ = {'%.4f'%(self.gamma)}, ε = {'%.4f'%self.epsilon}, ε_min = {'%.4f'%self.epsilon_min}, ε_decay = {'%.4f'%self.epsilon_decay}")
         
-        plt.savefig("qlt_rewards.pdf")
-        plt.clf()
-
-    def plot_loss(self):
-        window = 10
-        plt.figure(figsize = (10, 5))
-        
-        plt.plot(self.losses, alpha = 0.3, color = 'blue', label = "Raw Loss")
-        plt.plot(range(window - 1, len(self.losses)), np.convolve(self.losses, np.ones(window) / window, mode = 'valid'), label = "Smoothed Loss", color = 'blue')
-        
-        plt.xlabel("Episode")
-        plt.ylabel("Loss")
-        plt.suptitle("Loss Curve for Tabular Q-Learning")
-        plt.title(f"γ = {'%.4f'%(self.gamma)}, ε = {'%.4f'%self.epsilon}, ε_min = {'%.4f'%self.epsilon_min}, ε_decay = {'%.4f'%self.epsilon_decay}")
-        
-        plt.savefig("qlt_loss.pdf")
-        plt.clf()
+        plt.show(block= False)
+        plt.savefig(f"./plots/qlt_rewards_{str(self.epsilon_decay * 100)}_{str(self.gamma * 100)}.pdf.pdf")
+        # plt.clf()
 
     def plot_accuracy(self):
         window = 10
@@ -122,28 +113,97 @@ class Agent:
             accuracy.append(float(tmp / (idx + 1)))
 
         plt.figure(figsize = (10, 5))
-        plt.plot(accuracy, alpha = 0.3, color = 'red', label = "Raw Accuracy")
-        plt.plot(range(window - 1, len(accuracy)), np.convolve(accuracy, np.ones(window) / window, mode = 'valid'), label = "Smoothed Accuracy", color = 'red')
+        plt.plot(accuracy, color = 'red', label = "Raw Accuracy")
+        # plt.plot(range(window - 1, len(accuracy)), np.convolve(accuracy, np.ones(window) / window, mode = 'valid'), label = "Smoothed Accuracy")
 
         plt.xlabel("Episode")
         plt.ylabel("Accuracy")
         plt.suptitle("Accuracy Curve for Tabular Q-Learning")
         plt.title(f"γ = {'%.4f'%(self.gamma)}, ε = {'%.4f'%self.epsilon}, ε_min = {'%.4f'%self.epsilon_min}, ε_decay = {'%.4f'%self.epsilon_decay}")
 
-        plt.savefig("qlt_accuracy.pdf")
-        plt.clf()
+        plt.show(block= False)
+        plt.savefig(f"./plots/qlt_accuracy_{str(self.epsilon_decay * 100)}_{str(self.gamma * 100)}.pdf")
+        # plt.clf()
 
-if __name__ == "__main__":    
+def plot_rewards(structure):
+    window = 10
+    plt.figure(figsize=(10, 5))
+    for elemento in structure:
+        plt.plot(elemento[1], label=f"{elemento[0]} - raw")
+        # plt.plot(
+        #     range(window - 1, len(elemento)),
+        #     np.convolve(elemento, np.ones(window) / window, mode='valid'),
+        #     label=f"Run {structure.index(elemento)} - smooth"
+        # )
+    plt.xlabel("Episode")
+    plt.ylabel("Reward")
+    plt.suptitle("Rewards Curve for Tabular Q-Learning")
+    plt.legend()
+    plt.show()
+
+def plot_accuracies(structure):
+    window = 10
+    plt.figure(figsize=(10, 5))
+    for elemento in structure:
+        i = 0
+        tmp = 0
+        accuracy = []
+        for elem in elemento[1]:
+            tmp += elem
+            accuracy.append(float(tmp / (i + 1)))
+            i += 1
+        
+        plt.plot(accuracy, label=f"{elemento[0]} - raw")
+        
+            # plt.plot(accuracy, alpha = 0.3, label=f"Run {structure.index(elemento)} - raw")
+            # plt.plot(
+            #     range(window - 1, len(accuracy)),
+            #     np.convolve(accuracy, np.ones(window) / window, mode='valid'),
+            #     label=f"Run {structure.index(elemento)}"
+            # )
+    plt.xlabel("Episode")
+    plt.ylabel("Accuracy")
+    plt.suptitle("Accuracy Curve for Tabular Q-Learning")
+    plt.legend()
+    plt.show()
+
+if __name__ == "__main__":
+
+    rewards = []
+    accuracies = []
+    episodes = 125
+
+    gamma = 0.5
+    epsilon = 1.0
+    epsilon_min = 0.1
+    epsilon_decay = 0.5
+    
+    env = gym.make("Taxi-v3")
+    agent = Agent(env, gamma, epsilon, epsilon_min, epsilon_decay)
+    
+    rewards.append([f"γ: {agent.gamma}, ε_dec: {agent.epsilon_decay}", agent.get_rewards()])
+    accuracies.append([f"γ: {agent.gamma}, ε_dec: {agent.epsilon_decay}", agent.get_successes()])
+
+    agent.train(episodes)
+    # agent.plot_rewards()
+    # agent.plot_accuracy()
+
     gamma = 0.99
     epsilon = 1.0
     epsilon_min = 0.1
-    epsilon_decay = 0.9
-    episodes = 256
+    epsilon_decay = 0.995
     
     env = gym.make("Taxi-v3")
     agent = Agent(env, gamma, epsilon, epsilon_min, epsilon_decay)
     
     agent.train(episodes)
-    agent.plot_rewards()
-    agent.plot_loss()
-    agent.plot_accuracy()
+    # agent.plot_rewards()
+    # agent.plot_accuracy()
+
+    rewards.append([f"γ: {agent.gamma}, ε_dec: {agent.epsilon_decay}", agent.get_rewards()])
+    accuracies.append([f"γ: {agent.gamma}, ε_dec: {agent.epsilon_decay}", agent.get_successes()])
+
+    plot_rewards(rewards)
+    plot_accuracies(accuracies)
+
+    a = input()
