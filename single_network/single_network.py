@@ -61,8 +61,9 @@ class ReplayBuffer:
     def __init__(self, capacity):
         self.buffer=deque(maxlen=capacity)
 
-    def push(self, state, action, reward, next_state, done):
-        self.buffer.append((state, action, reward, next_state, done))
+    # removed "done" 
+    def push(self, state, action, reward, next_state):
+        self.buffer.append((state, action, reward, next_state))
 
     def pick(self, batch_size):
         return random.sample(self.buffer, batch_size)
@@ -71,7 +72,8 @@ class ReplayBuffer:
         return len(self.buffer)
 
 class Agent:
-    def __init__(self, layers, state_dim, action_dim, gamma, epsilon, epsilon_decay, epsilon_min, lr):
+    # added "buffer_size"
+    def __init__(self, layers, state_dim, action_dim, gamma, epsilon, epsilon_decay, epsilon_min, lr, buffer_size):
         self.state_dim=state_dim
         self.action_dim=action_dim
         self.gamma=gamma
@@ -92,7 +94,7 @@ class Agent:
 
         self.q_network.to(self.device)
         self.optimizer=optim.Adam(self.q_network.parameters(), lr=lr)
-        self.replay_buffer=ReplayBuffer(10000)
+        self.replay_buffer=ReplayBuffer(buffer_size)
 
     def select_action(self, state):
         if np.random.rand()<=self.epsilon:
@@ -104,6 +106,11 @@ class Agent:
                 q_values=self.q_network(state_tensor)
                 return q_values.argmax().item()
     
+    def get_q_values(self, state):
+        state_tensor = torch.tensor([state], dtype=torch.long, device=self.device)
+        state_tensor = F.one_hot(state_tensor, num_classes=self.state_dim).float()
+        return self.q_network(state_tensor)
+    
     def replay(self, batch_size):
         if self.replay_buffer.sizeof() < batch_size:
             return None
@@ -113,7 +120,6 @@ class Agent:
         actions=[item[1] for item in batch]
         rewards=[item[2] for item in batch]
         next_states=[item[3] for item in batch]
-        dones=[item[4] for item in batch]
 
         states=torch.tensor(states, dtype=torch.long, device=self.device)
         states= F.one_hot(states, num_classes=self.state_dim).float()
@@ -122,14 +128,13 @@ class Agent:
 
         actions=torch.tensor(actions, dtype=torch.long, device=self.device)
         rewards=torch.tensor(rewards, dtype=torch.float, device=self.device)
-        dones=torch.tensor(dones, dtype=torch.float, device=self.device)
 
         q_values=self.q_network(states)
         next_q_values=self.q_network(next_states)
 
         q_value=q_values.gather(1, actions.unsqueeze(1)).squeeze(1)
         next_q_value=next_q_values.max(1)[0]
-        target=rewards+(self.gamma*next_q_value*(1-dones))
+        target=rewards+(self.gamma*next_q_value)
         loss=F.mse_loss(q_value, target)
 
         self.optimizer.zero_grad()
@@ -208,7 +213,7 @@ class Agent:
         plt.savefig(f"{self.layers}L_accuracy.jpg")
         plt.clf()
 
-def train(epsiodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
+def train(epsiodes, gamma, epsilon, epsilon_decay, epsilon_min, lr, bs):
     env=gym.make("Taxi-v3")
     
     L3_agent= Agent(layers=3,
@@ -218,7 +223,8 @@ def train(epsiodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
                     epsilon=epsilon,
                     epsilon_decay=epsilon_decay,
                     epsilon_min=epsilon_min,
-                    lr=lr)
+                    lr=lr, 
+                    buffer_size = bs)
     
     L4_agent= Agent(layers=4,
                     state_dim=env.observation_space.n,
@@ -227,7 +233,8 @@ def train(epsiodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
                     epsilon=epsilon,
                     epsilon_decay=epsilon_decay,
                     epsilon_min=epsilon_min,
-                    lr=lr)
+                    lr=lr, 
+                    buffer_size = bs)
 
     L5_agent= Agent(layers=5,
                     state_dim=env.observation_space.n,
@@ -236,7 +243,8 @@ def train(epsiodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
                     epsilon=epsilon,
                     epsilon_decay=epsilon_decay,
                     epsilon_min=epsilon_min,
-                    lr=lr)
+                    lr=lr, 
+                    buffer_size = bs)
 
     agents=[L3_agent, L4_agent, L5_agent]
 
@@ -254,20 +262,53 @@ def train(epsiodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
             episode_losses=[]
             success=0
 
+            # while not done:
+            #     action=a.select_action(state)
+            #     next_state, reward, terminated, truncated, _ =env.step(action)
+
+            #     if(terminated):
+            #         success=1
+
+            #     done= terminated or truncated
+            #     a.replay_buffer.push(state, action, reward, next_state)
+            #     loss_val=a.replay(64)
+            #     if loss_val is not None:
+            #         episode_losses.append(loss_val)
+            #     state=next_state
+            #     total_reward+=reward
+            
             while not done:
-                action=a.select_action(state)
-                next_state, reward, terminated, truncated, _ =env.step(action)
-
+                # prendi q-value corrente
+                q_value = a.get_q_values(state)
+                
+                # prendi azione
+                action = a.select_action(state)
+            
+                # esecuzione azione e raccolta info
+                next_state, reward, terminated, truncated, _ = env.step(action)
+                
+                # tieni traccia del successo
                 if(terminated):
-                    success=1
+                    success = 1
+                    
+                done = terminated or truncated
+                
+                # caricamento delle informazioni nel replay buffer
+                a.replay_buffer.push(state, action, reward, next_state)
+                
+                q_value_new = a.get_q_values(next_state)
+                
+                target = reward + gamma * q_value_new
+                loss=F.mse_loss(q_value, target)
+                
+                a.optimizer.zero_grad()
+                loss.backward()
+                a.optimizer.step()
 
-                done= terminated or truncated
-                a.replay_buffer.push(state, action, reward, next_state, done)
-                loss_val=a.replay(64)
-                if loss_val is not None:
-                    episode_losses.append(loss_val)
-                state=next_state
+                state = next_state
+                episode_losses.append(loss.item())
                 total_reward+=reward
+
 
             if a.epsilon>a.epsilon_min:
                 a.epsilon*=a.epsilon_decay
@@ -302,4 +343,4 @@ if __name__=="__main__":
     epsilon_min=0.1
     lr=0.001
     episodes=8000
-    train(episodes, gamma, epsilon, epslion_decay, epsilon_min, lr)
+    train(episodes, gamma, epsilon, epslion_decay, epsilon_min, lr, 64)
