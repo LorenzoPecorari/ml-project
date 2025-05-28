@@ -200,7 +200,7 @@ if __name__ == "__main__":
 
     episodes = 2000
     alpha=0.1
-    gamma = 0.9
+    gamma = 0.5
     epsilon = 1.0
     epsilon_min = 0.1
 
