@@ -342,5 +342,5 @@ if __name__=="__main__":
     epslion_decay=0.995
     epsilon_min=0.1
     lr=0.001
-    episodes=8000
+    episodes=4000
     train(episodes, gamma, epsilon, epslion_decay, epsilon_min, lr, 64)
