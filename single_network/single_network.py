@@ -164,7 +164,7 @@ class Agent:
         plt.suptitle(f"Rewards Curve for NN with {self.layers} layers\n")
         plt.title(f"γ = {'%.4f'%(self.gamma)}, ε = {'%.4f'%(self.epsilon)}, ε_dec = {'%.4f'%(self.epsilon_decay)}, ε_min = {'%.4f'%(self.epsilon_min)}, lr = {'%.4f'%(self.lr)}")
 
-        plt.savefig(f"{layers}L_rewards.jpg")
+        plt.savefig(f"{layers}L_rewards.pdf")
         plt.clf()
 
     # plotting losses using mobile window of 10 episodes
@@ -181,7 +181,7 @@ class Agent:
         plt.suptitle(f"Loss Curve for NN with {self.layers} layers\n")
         plt.title(f"γ = {'%.4f'%(self.gamma)}, ε = {'%.4f'%(self.epsilon)}, ε_dec = {'%.4f'%(self.epsilon_decay)}, ε_min = {'%.4f'%(self.epsilon_min)}, lr = {'%.4f'%(self.lr)}")
 
-        plt.savefig(f"{layers}L_loss.jpg")
+        plt.savefig(f"{layers}L_loss.pdf")
         plt.clf()
         
     # plotting accuracy
@@ -205,7 +205,7 @@ class Agent:
         plt.suptitle(f"Accuracy Curve for NN with {self.layers} layers\n")
         plt.title(f"γ = {'%.4f'%(self.gamma)}, ε = {'%.4f'%(self.epsilon)}, ε_dec = {'%.4f'%(self.epsilon_decay)}, ε_min = {'%.4f'%(self.epsilon_min)}, lr = {'%.4f'%(self.lr)}")
         
-        plt.savefig(f"{self.layers}L_accuracy.jpg")
+        plt.savefig(f"{self.layers}L_accuracy.pdf")
         plt.clf()
 
 def train(epsiodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
