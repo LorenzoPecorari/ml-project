@@ -95,7 +95,7 @@ class Agent:
 
         self.q_network.to(self.device)
         self.optimizer=optim.Adam(self.q_network.parameters(), lr=lr)
-        self.replay_buffer=ReplayBuffer(5000)
+        self.replay_buffer=ReplayBuffer(10000)
 
     def select_action(self, state):
         if np.random.rand()<=self.epsilon:
@@ -218,7 +218,7 @@ def plot_agents(agents):
     plt.ylabel("Rewards")
     plt.grid()
     for agent in agents:
-        np.convolve(agent.rewards, np.ones(window)/window, mode='valid')
+        plt.plot(range(window - 1, len(agent.rewards)), np.convolve(agent.rewards, np.ones(window)/window, mode='valid'), label=f"Agent {agent.layers} layers")
     plt.legend()
     plt.savefig("rewards.pdf")
     
@@ -229,7 +229,7 @@ def plot_agents(agents):
     plt.grid()
     plt.ylim(-400, 20)
     for agent in agents:
-        np.convolve(agent.rewards, np.ones(window)/window, mode='valid')
+        plt.plot(range(window - 1, len(agent.rewards)), np.convolve(agent.rewards, np.ones(window)/window, mode='valid'), label=f"Agent {agent.layers} layers")
     plt.legend()
     plt.savefig("rewards_zoomed.pdf")
     
@@ -239,7 +239,7 @@ def plot_agents(agents):
     plt.ylabel("Loss")
     plt.grid()
     for agent in agents:
-        np.convolve(agent.losses, np.ones(window)/window, mode='valid')
+        plt.plot(range(window - 1, len(agent.losses)), np.convolve(agent.losses, np.ones(window)/window, mode='valid'), label=f"Agent {agent.layers} layers")
     plt.legend()
     plt.savefig("losses.pdf")
     
@@ -249,7 +249,7 @@ def plot_agents(agents):
     plt.ylabel("Accuracy")
     plt.grid()
     for agent in agents:
-        np.convolve(agent.accuracy, np.ones(window)/window, mode='valid')
+        plt.plot(range(window - 1, len(agent.accuracy)), np.convolve(agent.accuracy, np.ones(window)/window, mode='valid'), label=f"Agent {agent.layers} layers")
     plt.legend()
     plt.savefig("accuracies.pdf")        
 
@@ -286,19 +286,20 @@ def train(epsiodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
     agents=[L3_agent, L4_agent, L5_agent]
 
     for a in agents:
+        success=0
         for e in range(epsiodes):
             state, _ =env.reset()
             done=False
             total_reward=0
             episode_losses=[]
-            success=0
+            
 
             while not done:
                 action=a.select_action(state)
                 next_state, reward, terminated, truncated, _ =env.step(action)
 
                 if(terminated):
-                    success=1
+                    success+=1
 
                 done= terminated or truncated
                 a.replay_buffer.push(state, action, reward, next_state, done)
