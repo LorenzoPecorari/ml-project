@@ -92,7 +92,7 @@ class Agent:
 
         self.q_network.to(self.device)
         self.optimizer=optim.Adam(self.q_network.parameters(), lr=lr)
-        self.replay_buffer=ReplayBuffer(10000)
+        self.replay_buffer=ReplayBuffer(100000)
 
     def select_action(self, state):
         if np.random.rand()<=self.epsilon:
