@@ -81,6 +81,9 @@ class Agent:
         self.lr=lr
         self.layers=layers
         self.device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.accuracy=[]
+        self.losses=[]
+        self.rewards=[]
 
         match(layers):
             case 3:
@@ -158,55 +161,46 @@ class Agent:
                 self.q_network.load_state_dict(torch.load(filepath, weights_only=True))
 
     # plotting rewards using mobile window of 10 episodes
-    def plot_rewards_smoothed(self, rewards, layers):
+    def plot_rewards_smoothed(self):
         window = 10
-        smoothed_rewards = np.convolve(rewards, np.ones(window)/window, mode='valid')
+        smoothed_rewards = np.convolve(self.rewards, np.ones(window)/window, mode='valid')
         
         plt.figure(figsize=(10, 5))
-        plt.plot(rewards, alpha=0.3, label="Raw Reward")
-        plt.plot(range(window - 1, len(rewards)), smoothed_rewards, label=f"Smoothed Rewards (window={window})", color='green')
+        plt.plot(self.rewards, alpha=0.3, label="Raw Reward")
+        plt.plot(range(window - 1, len(self.rewards)), smoothed_rewards, label=f"Smoothed Rewards (window={window})", color='green')
 
         plt.xlabel("Episode")
         plt.ylabel("Reward")
         plt.suptitle(f"Rewards Curve for NN with {self.layers} layers\n")
         plt.title(f"γ = {'%.4f'%(self.gamma)}, ε = {'%.4f'%(self.epsilon)}, ε_dec = {'%.4f'%(self.epsilon_decay)}, ε_min = {'%.4f'%(self.epsilon_min)}, lr = {'%.4f'%(self.lr)}")
 
-        plt.savefig(f"{layers}L_rewards.pdf")
+        plt.savefig(f"{self.layers}L_rewards.pdf")
         plt.clf()
 
     # plotting losses using mobile window of 10 episodes
-    def plot_losses(self, losses, layers):
+    def plot_losses(self):
         window = 10
-        smoothed_losses = np.convolve(losses, np.ones(window)/window, mode='valid')
+        smoothed_losses = np.convolve(self.losses, np.ones(window)/window, mode='valid')
         
         plt.figure(figsize=(10, 5))
-        plt.plot(losses, alpha=0.3, label="Raw Loss")
-        plt.plot(range(window - 1, len(losses)), smoothed_losses, label=f"Smoothed Loss (window={window})", color='red')
+        plt.plot(self.losses, alpha=0.3, label="Raw Loss")
+        plt.plot(range(window - 1, len(self.losses)), smoothed_losses, label=f"Smoothed Loss (window={window})", color='red')
 
         plt.xlabel("Episode")
         plt.ylabel("Loss")
         plt.suptitle(f"Loss Curve for NN with {self.layers} layers\n")
         plt.title(f"γ = {'%.4f'%(self.gamma)}, ε = {'%.4f'%(self.epsilon)}, ε_dec = {'%.4f'%(self.epsilon_decay)}, ε_min = {'%.4f'%(self.epsilon_min)}, lr = {'%.4f'%(self.lr)}")
 
-        plt.savefig(f"{layers}L_loss.pdf")
+        plt.savefig(f"{self.layers}L_loss.pdf")
         plt.clf()
         
     # plotting accuracy
-    def plot_accuracy(self, successes):
-        size = len(successes)
-        tmp = 0
-        accuracy = []
+    def plot_accuracy(self):
         window = 10
+        smoothed_accuracy = np.convolve(self.accuracy, np.ones(window)/window, mode='valid')
         
-        for i in range(1, size + 1):
-            tmp += successes[i-1]
-            print(f"Accuracy: {tmp/i}")
-            accuracy.append(tmp/i)
-            
-        smoothed_accuracy = np.convolve(accuracy, np.ones(window)/window, mode='valid')
-        
-        plt.plot(accuracy, alpha=0.3, label="Raw Accuracy")
-        plt.plot(range(window - 1, len(accuracy)), smoothed_accuracy, label=f"Smoothed Loss (window={window})", color='blue')
+        plt.plot(self.accuracy, alpha=0.3, label="Raw Accuracy")
+        plt.plot(range(window - 1, len(self.accuracy)), smoothed_accuracy, label=f"Smoothed Loss (window={window})", color='blue')
         plt.xlabel("Episode")
         plt.ylabel("Accuracy")
         plt.suptitle(f"Accuracy Curve for NN with {self.layers} layers\n")
@@ -214,6 +208,49 @@ class Agent:
         
         plt.savefig(f"{self.layers}L_accuracy.pdf")
         plt.clf()
+        
+
+def plot_agents(agents):
+    plt.title("Rewards comparison")
+    plt.figure(figsize=(10, 5))
+    plt.xlabel("Episode")
+    plt.ylabel("Rewards")
+    plt.grid()
+    for agent in agents:
+        plt.plot(agent.rewards, label=f"Agent with {agent.layers} layer")
+    plt.legend()
+    plt.savefig("rewards.pdf")
+    
+    plt.title("Rewards zoomed comparison")
+    plt.figure(figsize=(10, 5))
+    plt.xlabel("Episode")
+    plt.ylabel("Rewards")
+    plt.grid()
+    plt.ylim(-400, 20)
+    for agent in agents:
+        plt.plot(agent.rewards, label=f"Agent with {agent.layers} layer")
+    plt.legend()
+    plt.savefig("rewards_zoomed.pdf")
+    
+    plt.title("Losses comparison")
+    plt.figure(figsize=(10, 5))
+    plt.xlabel("Episode")
+    plt.ylabel("Loss")
+    plt.grid()
+    for agent in agents:
+        plt.plot(agent.losses, label=f"Agent with {agent.layers} layer")
+    plt.legend()
+    plt.savefig("losses.pdf")
+    
+    plt.title("Accuracies comparison")
+    plt.figure(figsize=(10, 5))
+    plt.xlabel("Episode")
+    plt.ylabel("Accuracy")
+    plt.grid()
+    for agent in agents:
+        plt.plot(agent.accuracy, label=f"Agent with {agent.layers} layer")
+    plt.legend()
+    plt.savefig("accuracies.pdf")        
 
 def train(epsiodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
     env=gym.make("Taxi-v3")
@@ -245,15 +282,9 @@ def train(epsiodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
                     epsilon_min=epsilon_min,
                     lr=lr)
 
-    agents=[L3_agent, L4_agent]
+    agents=[L3_agent, L4_agent, L5_agent]
 
     for a in agents:
-        rewards=[]
-        losses_per_episode=[]
-        successes=[]
-
-        # a.load_train(str(a.layers) + "L.pth")
-
         for e in range(epsiodes):
             state, _ =env.reset()
             done=False
@@ -281,22 +312,21 @@ def train(epsiodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
 
             if len(episode_losses)>0:
                 avg_loss=np.mean(episode_losses)
-                losses_per_episode.append(avg_loss)
+                a.losses.append(avg_loss)
             else:
-                losses_per_episode.append(0)
+                a.losses.append(0)
 
-            successes.append(success)
-            rewards.append(total_reward)
-            print(f"Agent {a.layers}L - Episode {e}, Total Reward: {total_reward}, ε: {a.epsilon:.4f}, Avg Loss: {losses_per_episode[-1]:.6f}")
+            a.accuracy.append(success/(e+1))
+            a.rewards.append(total_reward)
+            print(f"Agent {a.layers}L - Episode {e}, Total Reward: {total_reward}, ε: {a.epsilon:.4f}, Avg Loss: {a.losses[-1]:.6f}")
         
-        a.plot_rewards_smoothed(rewards, a.layers)
-        a.plot_losses(losses_per_episode, a.layers)
-        a.plot_accuracy(successes)
+        # a.plot_rewards_smoothed()
+        # a.plot_losses()
+        # a.plot_accuracy()
         
         a.save_train()
-        
-        successes = None
-        successes = []
+
+    plot_agents(agents)
 
 if __name__=="__main__":
     env=gym.make("Taxi-v3")
