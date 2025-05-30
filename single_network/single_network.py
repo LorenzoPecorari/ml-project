@@ -107,14 +107,21 @@ class Agent:
     def replay(self, batch_size):
         if self.replay_buffer.sizeof() < batch_size:
             return None
-        
-        batch=self.replay_buffer.pick(batch_size)
-        states=[item[0] for item in batch]
-        actions=[item[1] for item in batch]
-        rewards=[item[2] for item in batch]
-        next_states=[item[3] for item in batch]
-        dones=[item[4] for item in batch]
 
+        states = []
+        actions = []
+        rewards = []
+        next_states = []
+        dones = []
+                 
+        batch=self.replay_buffer.pick(batch_size)
+        for item in batch:
+            states.append(item[0])
+            actions.append(item[1])
+            rewards.append(item[2])
+            next_states.append(item[3])
+            dones.append(item[4])
+            
         states=torch.tensor(states, dtype=torch.long, device=self.device)
         states= F.one_hot(states, num_classes=self.state_dim).float()
         next_states=torch.tensor(next_states,  dtype=torch.long, device=self.device)
@@ -238,7 +245,8 @@ def train(epsiodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
                     epsilon_min=epsilon_min,
                     lr=lr)
 
-    agents=[L3_agent, L4_agent, L5_agent]
+    # agents=[L3_agent, L4_agent, L5_agent]
+    agents = [L5_agent]
 
     for a in agents:
         rewards=[]
