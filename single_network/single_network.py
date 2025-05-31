@@ -95,7 +95,7 @@ class Agent:
 
         self.q_network.to(self.device)
         self.optimizer=optim.Adam(self.q_network.parameters(), lr=lr)
-        self.replay_buffer=ReplayBuffer(10000)
+        self.replay_buffer=ReplayBuffer(100000)
 
     def select_action(self, state):
         if np.random.rand()<=self.epsilon:
@@ -212,7 +212,6 @@ class Agent:
 
 def plot_agents(agents):
     window = 100
-    plt.title("Rewards comparison")
     plt.figure(figsize=(10, 5))
     plt.xlabel("Episode")
     plt.ylabel("Rewards")
@@ -220,9 +219,9 @@ def plot_agents(agents):
     for agent in agents:
         plt.plot(range(window - 1, len(agent.rewards)), np.convolve(agent.rewards, np.ones(window)/window, mode='valid'), label=f"Agent {agent.layers} layers")
     plt.legend()
+    plt.title("Rewards comparison")
     plt.savefig("rewards.pdf")
     
-    plt.title("Rewards zoomed comparison")
     plt.figure(figsize=(10, 5))
     plt.xlabel("Episode")
     plt.ylabel("Rewards")
@@ -231,9 +230,9 @@ def plot_agents(agents):
     for agent in agents:
         plt.plot(range(window - 1, len(agent.rewards)), np.convolve(agent.rewards, np.ones(window)/window, mode='valid'), label=f"Agent {agent.layers} layers")
     plt.legend()
+    plt.title("Rewards zoomed comparison")
     plt.savefig("rewards_zoomed.pdf")
     
-    plt.title("Losses comparison")
     plt.figure(figsize=(10, 5))
     plt.xlabel("Episode")
     plt.ylabel("Loss")
@@ -241,9 +240,9 @@ def plot_agents(agents):
     for agent in agents:
         plt.plot(range(window - 1, len(agent.losses)), np.convolve(agent.losses, np.ones(window)/window, mode='valid'), label=f"Agent {agent.layers} layers")
     plt.legend()
+    plt.title("Losses comparison")
     plt.savefig("losses.pdf")
     
-    plt.title("Accuracies comparison")
     plt.figure(figsize=(10, 5))
     plt.xlabel("Episode")
     plt.ylabel("Accuracy")
@@ -251,6 +250,7 @@ def plot_agents(agents):
     for agent in agents:
         plt.plot(range(window - 1, len(agent.accuracy)), np.convolve(agent.accuracy, np.ones(window)/window, mode='valid'), label=f"Agent {agent.layers} layers")
     plt.legend()
+    plt.title("Accuracies comparison")
     plt.savefig("accuracies.pdf")        
 
 def train(epsiodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
