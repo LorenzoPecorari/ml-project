@@ -13,7 +13,7 @@ class QTable:
     def __init__(self, states, actions):
         self.table = np.zeros((states, actions))
 
-    def update(self, state, action, reward, next_state, gamma, alpha):
+    def update(self, state, action, gamma):
         next_states = env.unwrapped.P[state][action]
 
         tmp = 0.0
@@ -55,8 +55,8 @@ class Agent:
         else:
             return np.argmax(self.q_table.get_row(state))
         
-    def update_table(self, state, action, reward, next_state):
-        self.q_table.update(state, action, reward, next_state, self.gamma, self.alpha)
+    def update_table(self, state, action):
+        self.q_table.update(state, action, self.gamma)
 
     def train(self, episodes):
         for e in range(0, episodes):
@@ -72,7 +72,6 @@ class Agent:
 
                 next_state, reward, done, truncated, _ = self.env.step(action)
                 
-
                 if(not(isinstance(state, int))):
                     state = state[0]
                 
@@ -80,7 +79,7 @@ class Agent:
                     next_state = next_state[0]
                 
                 temp_reward += reward
-                self.update_table(state, action, reward, next_state)
+                self.update_table(state, action)
                 state = next_state
                 steps += 1
 
