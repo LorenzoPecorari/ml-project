@@ -8,12 +8,23 @@ import matplotlib
 
 import matplotlib.pyplot as plt
 
+env = gym.make('Taxi-v3')
 class QTable:
     def __init__(self, states, actions):
         self.table = np.zeros((states, actions))
 
     def update(self, state, action, reward, next_state, gamma, alpha):
-        self.table[int(state)][action] = (1-alpha)*self.table[int(state)][action] + alpha * (reward + gamma * np.max(self.table[int(next_state)]))
+        next_states = env.unwrapped.P[state][action]
+
+        tmp = 0.0
+        for s in next_states:
+            prob = s[0]
+            ns = s[1]
+            reward = s[2]
+            tmp += prob * (reward + gamma * max(self.table[ns]))
+
+        self.table[int(state)][action] = tmp # raw application of nondeterministic q function
+
         return self.table[state][action]
     
     def get_row(self, state):
@@ -61,6 +72,7 @@ class Agent:
 
                 next_state, reward, done, truncated, _ = self.env.step(action)
                 
+
                 if(not(isinstance(state, int))):
                     state = state[0]
                 
@@ -192,7 +204,7 @@ def plot_rewards_zoom(structure, filename):
 
 if __name__ == "__main__":
 
-    env = gym.make("Taxi-v3")
+    # env = gym.make("Taxi-v3")
     rewards = []
     accuracies = []
 
