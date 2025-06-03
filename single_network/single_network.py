@@ -71,7 +71,7 @@ class ReplayBuffer:
         return len(self.buffer)
 
 class Agent:
-    def __init__(self, layers, state_dim, action_dim, gamma, epsilon, epsilon_decay, epsilon_min, lr):
+    def __init__(self, layers, state_dim, action_dim, gamma, epsilon, epsilon_decay, epsilon_min, lr, alpha):
         self.state_dim=state_dim
         self.action_dim=action_dim
         self.gamma=gamma
@@ -79,6 +79,7 @@ class Agent:
         self.epsilon_decay=epsilon_decay
         self.epsilon_min=epsilon_min
         self.lr=lr
+        self.alpha=alpha
         self.layers=layers
         self.device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.accuracy=[]
@@ -95,7 +96,7 @@ class Agent:
 
         self.q_network.to(self.device)
         self.optimizer=optim.Adam(self.q_network.parameters(), lr=lr)
-        self.replay_buffer=ReplayBuffer(5000)
+        self.replay_buffer=ReplayBuffer(10000)
 
     def select_action(self, state):
         if np.random.rand()<=self.epsilon:
@@ -139,7 +140,7 @@ class Agent:
 
         q_value=q_values.gather(1, actions.unsqueeze(1)).squeeze(1)
         next_q_value=next_q_values.max(1)[0]
-        target=(rewards+(self.gamma * next_q_value * (1 - dones))).detach()
+        target=(( - self.alpha) * q_value + self.alpha *(rewards+(self.gamma * next_q_value * (1 - dones)))).detach()
         loss=F.mse_loss(q_value, target)
 
         self.optimizer.zero_grad()
@@ -253,7 +254,7 @@ def plot_agents(agents):
     plt.title("Accuracies comparison")
     plt.savefig("accuracies.pdf")        
 
-def train(epsiodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
+def train(epsiodes, gamma, epsilon, epsilon_decay, epsilon_min, lr, alpha):
     env=gym.make("Taxi-v3")
     
     L3_agent= Agent(layers=3,
@@ -263,7 +264,8 @@ def train(epsiodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
                     epsilon=epsilon,
                     epsilon_decay=epsilon_decay,
                     epsilon_min=epsilon_min,
-                    lr=lr)
+                    lr=lr,
+                    alpha=alpha)
     
     L4_agent= Agent(layers=4,
                     state_dim=env.observation_space.n,
@@ -272,7 +274,8 @@ def train(epsiodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
                     epsilon=epsilon,
                     epsilon_decay=epsilon_decay,
                     epsilon_min=epsilon_min,
-                    lr=lr)
+                    lr=lr,
+                    alpha=alpha)
 
     L5_agent= Agent(layers=5,
                     state_dim=env.observation_space.n,
@@ -281,7 +284,8 @@ def train(epsiodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
                     epsilon=epsilon,
                     epsilon_decay=epsilon_decay,
                     epsilon_min=epsilon_min,
-                    lr=lr)
+                    lr=lr,
+                    alpha=alpha)
 
     agents=[L3_agent, L4_agent, L5_agent]
 
@@ -340,5 +344,6 @@ if __name__=="__main__":
     epslion_decay=0.995
     epsilon_min=0.1
     lr=0.001
+    alpha=1.0
     episodes=2500
-    train(episodes, gamma, epsilon, epslion_decay, epsilon_min, lr)
+    train(episodes, gamma, epsilon, epslion_decay, epsilon_min, lr, alpha)
