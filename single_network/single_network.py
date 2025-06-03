@@ -322,9 +322,9 @@ def train(epsiodes, gamma, epsilon, epsilon_decay, epsilon_min, lr):
             a.rewards.append(total_reward)
             print(f"Agent {a.layers}L - Episode {e}, Total Reward: {total_reward}, ε: {a.epsilon:.4f}, Avg Loss: {a.losses[-1]:.6f}")
         
-        # a.plot_rewards_smoothed()
-        # a.plot_losses()
-        # a.plot_accuracy()
+        a.plot_rewards_smoothed()
+        a.plot_losses()
+        a.plot_accuracy()
         
         a.save_train()
 

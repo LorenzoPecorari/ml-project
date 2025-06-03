@@ -144,42 +144,17 @@ class Agent:
 
             targets.append(target_i)
 
-        targets = torch.tensor(targets, dtype=torch.float, device=self.device).detach()
-
-        # next_states_tmp = []
-
-        # for i in range(0, len(states)):
-        #     next_states_tmp.append(env.unwrapped.P[states[i]][actions[i]])
-
-        # for elem in next_states_tmp:
-        #     probs.append(elem[0])
-
-        
+        targets = torch.tensor(targets, dtype=torch.float, device=self.device).detach()        
         probs=torch.tensor(probs, dtype=torch.float, device=self.device)
-            
         states=torch.tensor(states, dtype=torch.long, device=self.device)
         states= F.one_hot(states, num_classes=self.state_dim).float()
-        # next_states=torch.tensor(next_states,  dtype=torch.long, device=self.device)
-
-        # # for elem in next_states:
-        # #     print(elem.item())
-        
-        # next_states=F.one_hot(next_states, num_classes=self.state_dim).float()
-
         actions=torch.tensor(actions, dtype=torch.long, device=self.device)
-        # rewards=torch.tensor(rewards, dtype=torch.float, device=self.device)
-        # dones=torch.tensor(dones, dtype=torch.float, device=self.device)
-
+        
         q_values=self.q_network(states)
-        # next_q_values=self.q_network(next_states)
-
-
-
         q_value=q_values.gather(1, actions.unsqueeze(1)).squeeze(1)
-        # next_q_value=next_q_values.max(1)[0]
-        # target=(probs * (rewards+(self.gamma * next_q_value))).detach()
+        
         loss=F.mse_loss(q_value, targets)
-
+        
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
