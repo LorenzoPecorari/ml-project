@@ -16,6 +16,8 @@ class QTable:
     def update(self, state, action, gamma):
         next_states = env.unwrapped.P[state][action]
 
+        #self.table[state][action]=(1-alpha)*self.table[state][action]+ alpha*(reward+ gamma*np.max(self.table[state]))
+
         tmp = 0.0
         for s in next_states:
             prob = s[0]

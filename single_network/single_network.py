@@ -139,7 +139,7 @@ class Agent:
 
         q_value=q_values.gather(1, actions.unsqueeze(1)).squeeze(1)
         next_q_value=next_q_values.max(1)[0]
-        target=rewards+(self.gamma * next_q_value).detach()
+        target=(rewards+(self.gamma * next_q_value * (1 - dones))).detach()
         loss=F.mse_loss(q_value, target)
 
         self.optimizer.zero_grad()
