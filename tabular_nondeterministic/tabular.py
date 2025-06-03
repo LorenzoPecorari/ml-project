@@ -13,19 +13,10 @@ class QTable:
     def __init__(self, states, actions):
         self.table = np.zeros((states, actions))
 
-    def update(self, state, action, gamma):
+    def update(self, state, action, gamma, next_state, reward, alpha):
         next_states = env.unwrapped.P[state][action]
 
-        #self.table[state][action]=(1-alpha)*self.table[state][action]+ alpha*(reward+ gamma*np.max(self.table[state]))
-
-        tmp = 0.0
-        for s in next_states:
-            prob = s[0]
-            ns = s[1]
-            reward = s[2]
-            tmp += prob * (reward + gamma * max(self.table[ns]))
-
-        self.table[int(state)][action] = tmp # raw application of nondeterministic q function
+        self.table[state][action]=(1-alpha)*self.table[state][action]+ alpha*(reward+ gamma*np.max(self.table[next_state]))
 
         return self.table[state][action]
     
@@ -57,8 +48,8 @@ class Agent:
         else:
             return np.argmax(self.q_table.get_row(state))
         
-    def update_table(self, state, action):
-        self.q_table.update(state, action, self.gamma)
+    def update_table(self, state, action, next_state, reward):
+        self.q_table.update(state, action, self.gamma, next_state, reward, alpha)
 
     def train(self, episodes):
         for e in range(0, episodes):
@@ -81,7 +72,7 @@ class Agent:
                     next_state = next_state[0]
                 
                 temp_reward += reward
-                self.update_table(state, action)
+                self.update_table(state, action, next_state, reward)
                 state = next_state
                 steps += 1
 
@@ -211,9 +202,9 @@ if __name__ == "__main__":
 
     ### TESTS FOR CONSTANT GAMMA 
 
-    episodes = 2000
+    episodes = 1000
     alpha=0.1
-    gamma = 0.99
+    gamma = 0.5
     epsilon = 1.0
     epsilon_min = 0.1
 
