@@ -197,8 +197,8 @@ if __name__ == "__main__":
 
     ### TESTS FOR CONSTANT GAMMA 
 
-    episodes = 500
-    gamma = 0.9
+    episodes = 1000
+    gamma = 0.5
     epsilon = 1.0
     epsilon_min = 0.1
 
