@@ -96,7 +96,7 @@ class Agent:
 
         self.q_network.to(self.device)
         self.optimizer=optim.Adam(self.q_network.parameters(), lr=lr)
-        self.replay_buffer=ReplayBuffer(10000)
+        self.replay_buffer=ReplayBuffer(5000)
 
     def select_action(self, state):
         if np.random.rand()<=self.epsilon:
@@ -140,7 +140,7 @@ class Agent:
 
         q_value=q_values.gather(1, actions.unsqueeze(1)).squeeze(1)
         next_q_value=next_q_values.max(1)[0]
-        target=(( - self.alpha) * q_value + self.alpha *(rewards+(self.gamma * next_q_value * (1 - dones)))).detach()
+        target=((1 - self.alpha) * q_value + self.alpha *(rewards+(self.gamma * next_q_value * (1 - dones)))).detach()
         loss=F.mse_loss(q_value, target)
 
         self.optimizer.zero_grad()
@@ -344,6 +344,6 @@ if __name__=="__main__":
     epslion_decay=0.995
     epsilon_min=0.1
     lr=0.001
-    alpha=1.0
+    alpha=0.2
     episodes=2500
     train(episodes, gamma, epsilon, epslion_decay, epsilon_min, lr, alpha)
